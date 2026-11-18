@@ -153,6 +153,9 @@
     $("resTips").innerHTML = r.tips.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
   }
   ["temp", "fukt", "sno"].forEach(function (id) { $(id).addEventListener("input", rakna); });
+  // Testformuläret följer aktuella förhållanden.
+  $("temp").addEventListener("input", function () { $("testForm").temp.value = $("temp").value; });
+  $("sno").addEventListener("input", function () { $("testSno").value = $("sno").value; });
 
   // ---------- Väder (Open-Meteo) ----------
   var nuISO = function () { var d = new Date(); d.setMinutes(0, 0, 0); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
@@ -250,8 +253,13 @@
     spara(); f.kommentar.value = ""; ritaTester(); rakna();
   };
   $("exportera").onclick = function () {
-    var blob = new Blob([JSON.stringify({ tester: state.tester, egna: state.egna }, null, 1)], { type: "application/json" });
-    var a = el("a", { href: URL.createObjectURL(blob), download: "vallatester.json" }); document.body.appendChild(a); a.click(); a.remove();
+    var json = JSON.stringify({ tester: state.tester, egna: state.egna }, null, 1);
+    var ta = $("exportText"); ta.hidden = false; ta.value = json; ta.select();
+    try { navigator.clipboard.writeText(json).then(function () { status("Testerna är kopierade – klistra in dem i en fil eller ett mejl."); }, function () {}); } catch (e) { /* markerad text räcker */ }
+    try {
+      var a = el("a", { href: URL.createObjectURL(new Blob([json], { type: "application/json" })), download: "vallatester.json" });
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) { /* nedladdning blockerad – texten visas ovan */ }
   };
   $("importera").onchange = function (e) {
     var fil = e.target.files[0]; if (!fil) return;
@@ -261,7 +269,7 @@
       (d.egna || []).forEach(function (v) { if (!finns[v.id]) state.egna.push(v); });
       state.tester = state.tester.concat(d.tester || []);
       spara(); ritaMarken(); ritaVallalista(); fyllTestValla(); ritaTester(); rakna();
-    }).catch(function () { alert("Kunde inte läsa filen."); });
+    }).catch(function () { $("exportText").hidden = false; $("exportText").value = "Kunde inte läsa filen – är det en JSON-export från Vallaguiden?"; });
   };
 
   // ---------- Om datan ----------
@@ -269,6 +277,17 @@
   $("forumInfo").innerHTML = F.uppdaterad
     ? "Forumdata: <strong>" + (F.omnamnanden || []).length + "</strong> vallaomnämnanden från " + esc((F.kallor || []).join(", ")) + ", uppdaterad " + esc(F.uppdaterad.slice(0, 10)) + "."
     : "Forumdata har inte hämtats ännu – kör <code>python3 scripts/hamta_tester.py</code> eller aktivera GitHub Actions-flödet.";
+
+  // ---------- Utan väderanslutning (t.ex. inbäddad version) ----------
+  if (window.UTAN_VADER) {
+    document.querySelectorAll(".vaderrad").forEach(function (e) { e.hidden = true; });
+    $("vaderstatus").innerHTML = 'Fyll i temperatur och snö själv – se t.ex. <a href="https://www.yr.no" target="_blank" rel="noopener">yr.no</a> eller <a href="https://www.smhi.se" target="_blank" rel="noopener">smhi.se</a>.';
+  }
+
+  // ---------- Installera som app (offline) ----------
+  if ("serviceWorker" in navigator && location.protocol === "https:" && !window.UTAN_VADER) {
+    try { navigator.serviceWorker.register("sw.js").catch(function () {}); } catch (e) { /* ej tillgängligt */ }
+  }
 
   // ---------- Start ----------
   ritaMarken(); ritaVallalista(); fyllTestValla(); ritaTester(); satLage(state.lage);

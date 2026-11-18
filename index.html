@@ -2,9 +2,15 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Vallaguiden</title>
   <meta name="description" content="Rekommendationer för längdskidvalla utifrån väder, snö, dina vallor och tester/forum.">
+  <meta name="theme-color" content="#1f6fd1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Vallaguiden">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="ikoner/ikon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="ikoner/ikon-180.png">
   <link rel="stylesheet" href="css/stil.css">
 </head>
 <body>
@@ -16,7 +22,7 @@
 <main>
   <section class="kort" id="forhallanden">
     <h2>1. Förhållanden</h2>
-    <div class="rad">
+    <div class="rad vaderrad">
       <label class="vaxa">Ort
         <input id="ort" type="text" placeholder="t.ex. Mora, Åre, Sjusjøen" autocomplete="off">
       </label>
@@ -109,6 +115,7 @@
       <button type="submit">Spara test</button>
     </form>
     <ul id="testLista" class="testlista"></ul>
+    <textarea id="exportText" class="exporttext" rows="5" readonly hidden aria-label="Exporterade tester"></textarea>
     <div class="rad">
       <button id="exportera" type="button" class="sekundar">Exportera tester (JSON)</button>
       <label class="knapp sekundar">Importera <input id="importera" type="file" accept="application/json" hidden></label>

@@ -6,7 +6,15 @@ Ett verktyg som ger rekommendationer på **glid- och fästvalla** utifrån väde
 
 Öppna `index.html` i webbläsaren (dubbelklicka). Ingen installation behövs.
 
-Eller publicera via GitHub Pages: *Settings → Pages → Deploy from branch*, så kan du använda den i mobilen ute i spåret.
+### I mobilen
+
+Appen kan installeras på hemskärmen och fungerar offline (väder kräver nät):
+
+1. Slå på GitHub Pages: *Settings → Pages → Source: **GitHub Actions***.
+2. Slå ihop koden till `main` – flödet `.github/workflows/pages.yml` publicerar då till `https://<användare>.github.io/valning/`.
+3. Öppna länken i mobilen → *Dela → Lägg till på hemskärmen* (iPhone) eller *⋮ → Installera app* (Android).
+
+`python3 scripts/bygg_enfil.py ut.html` bygger en fristående enfilsversion utan väderhämtning.
 
 1. **Förhållanden** – skriv en ort (eller 📍) och tidpunkt och tryck *Hämta väder*. Temperatur och luftfuktighet hämtas från Open-Meteo och snötypen gissas från de senaste 72 timmarnas väder (nysnö, regn, plusgrader). Justera om du ser något annat i spåret.
 2. **Dina vallor** – välj *Mina märken* (t.ex. Swix + Rex) eller *Mina vallor* och bocka i det du har. Saknas en valla kan du lägga till den själv.
