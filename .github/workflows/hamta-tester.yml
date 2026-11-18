@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "17 4 * * *"   # dagligen 04:17 UTC
   workflow_dispatch:
+  push:
+    paths:
+      - "scripts/kallor.json"
+      - "scripts/hamta_tester.py"
+      - ".github/workflows/hamta-tester.yml"
 
 permissions:
   contents: write
@@ -19,6 +24,7 @@ jobs:
       - name: Hämta och analysera
         run: python3 scripts/hamta_tester.py
       - name: Committa om något ändrats
+        if: github.ref_name == github.event.repository.default_branch
         run: |
           if ! git diff --quiet data/forum.js; then
             git config user.name "vallaguiden-bot"
