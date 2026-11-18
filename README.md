@@ -60,6 +60,10 @@ Källor ställs in i `scripts/kallor.json`. Reddit (r/xcountryskiing, r/langrenn
 ]
 ```
 
+**Reddit** blockerar anonyma anrop från GitHub Actions. Skapa en gratis app av typen *script* på <https://www.reddit.com/prefs/apps> och lägg in dess id och hemlighet som repo-hemligheter `REDDIT_CLIENT_ID` och `REDDIT_CLIENT_SECRET` (*Settings → Secrets and variables → Actions*).
+
+Varje körning sparar den utlästa texten från alla sidor som artefakten *utlast-text* (under körningen i *Actions*) – bra för att se varför en sida inte gav några recept.
+
 `typ` är `tillverkare`, `butik` eller `forum` och styr vikten. Adresserna under `sidor` kunde inte provas från utvecklingsmiljön – kör skriptet och se utskriften; byter en sajt struktur skrivs ett fel ut och övriga källor körs ändå. Läsaren är generell (ren text ur HTML), så de flesta sidor med vallatips fungerar utan specialkod.
 
 GitHub Actions-flödet `.github/workflows/hamta-tester.yml` kör skriptet varje natt och committar ny data. Det kan också startas manuellt under *Actions*.

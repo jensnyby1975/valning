@@ -22,7 +22,18 @@ jobs:
         with:
           python-version: "3.12"
       - name: Hämta och analysera
-        run: python3 scripts/hamta_tester.py
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+        run: python3 scripts/hamta_tester.py --dumpa utlast
+      - name: Spara utläst text (felsökning)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: utlast-text
+          path: utlast
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Committa om något ändrats
         if: github.ref_name == github.event.repository.default_branch
         run: |

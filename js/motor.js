@@ -90,13 +90,17 @@
       lager.forEach(function (l) { if (tillgangligt(perId[l.valla])) anvanda[l.valla] = 1; });
       var rader = lager.map(function (l) {
         var v = perId[l.valla], har = tillgangligt(v);
+        var alt = (l.alt || []).map(function (id) { return perId[id]; }).filter(Boolean);
+        // Har du ett av alternativen räknas lagret som klart.
+        var viaAlt = har ? null : alt.filter(tillgangligt)[0] || null;
+        if (viaAlt) { har = true; anvanda[viaAlt.id] = 1; }
         if (har) harAntal++;
         var roll = l.roll || ({ grund: "grund", klister: "klister", hard: "fäste", glid: "glid" })[v.typ];
         var ers = har ? null : ersattare(v, vallor, tillgangligt);
         // Samma ersättare för två lager = lägg bara ett lager av den.
         var hoppa = !!(ers && anvanda[ers.id]);
         if (ers) anvanda[ers.id] = 1;
-        return { valla: v, roll: roll, rollnamn: ROLLNAMN[roll] || roll, har: har, ersatt: ers, hoppaOver: hoppa };
+        return { valla: v, alt: alt, viaAlt: viaAlt, roll: roll, rollnamn: ROLLNAMN[roll] || roll, har: har, ersatt: ers, hoppaOver: hoppa };
       });
       var tackt = rader.filter(function (x) { return x.har || x.ersatt; }).length / rader.length;
       var neg = r.sentiment < 0 ? 0.6 : 1;

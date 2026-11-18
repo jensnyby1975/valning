@@ -1,5 +1,5 @@
 // Gör appen användbar offline (t.ex. i spåret utan täckning). Väder kräver nät.
-const CACHE = "vallaguiden-v2";
+const CACHE = "vallaguiden-v3";
 const FILER = ["./", "index.html", "css/stil.css", "js/motor.js", "js/app.js", "data/vallor.js", "data/kunskap.js", "data/forum.js",
   "manifest.webmanifest", "ikoner/ikon.svg", "ikoner/ikon-192.png", "ikoner/ikon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILER))); self.skipWaiting(); });

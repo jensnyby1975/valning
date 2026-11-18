@@ -52,6 +52,16 @@ class TestRecept(unittest.TestCase):
         self.assertIn([("swix-kx45", "klister"), ("swix-v45", "topp")], lager)
         self.assertTrue(all(r["temp"] == -6 for r in rec))
 
+    def test_butikssida_med_alternativ(self):
+        html = (pathlib.Path(__file__).parent / "exempel_butik.html").read_text(encoding="utf-8")
+        rec = h.hitta_recept(h.html_till_text(html), "Gear West", "butik", "", "", M, TYPER)
+        lager = [[(l["valla"], l["roll"], l["alt"]) for l in r["lager"]] for r in rec]
+        self.assertIn([("swix-ts5", "glid", []), ("swix-ts7", "glid-topp", ["rode-glid-medel"])], lager)
+        self.assertIn([("swix-kb20", "grund", ["rex-grundklister", "rode-grundklister"]),
+                       ("rode-viola-special", "topp", [])], lager)
+        self.assertEqual(len(rec), 2)  # "If it snows: A or B" är ett lager -> inget eget recept
+        self.assertAlmostEqual(rec[0]["temp"], -6.7, places=1)
+
     def test_roll_efter_namn(self):
         rec = h.hitta_recept("Kick: Swix KX20 binder, Rex blå klister cover. -8C", "x", "butik", "", "", M, TYPER)
         self.assertEqual([(l["valla"], l["roll"]) for l in rec[0]["lager"]],

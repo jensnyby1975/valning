@@ -100,3 +100,13 @@ test("egna tester med flera lager blir recept", () => {
   const r = M.rekommenderaRecept({ temp: -5, sno: "isig" }, VALLOR, () => true, { egnaTester: t });
   assert.strictEqual(r[0].recept.kalltyp, "eget");
 });
+
+test("recept: alternativ räknas som att man har lagret", () => {
+  const forum = { recept: [{ lager: [{ valla: "swix-kb20", alt: ["rex-grundklister"], roll: "grund" }, { valla: "rode-viola-special", alt: [], roll: "topp" }],
+    temp: -6, sno: "grovkornig", sentiment: 0, kalla: "Gear West", kalltyp: "butik", url: "", text: "x" }] };
+  const mina = new Set(["rex-grundklister"]);
+  const r = M.rekommenderaRecept({ temp: -6, sno: "grovkornig" }, VALLOR, (v) => mina.has(v.id), { forum });
+  const grund = r[0].rader[0];
+  assert.strictEqual(grund.har, true);
+  assert.strictEqual(grund.viaAlt.id, "rex-grundklister");
+});

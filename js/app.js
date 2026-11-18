@@ -138,6 +138,8 @@
         var status = l.har ? '<span class="har" title="Du har den">✓</span>'
           : l.ersatt ? '<span class="ersatt" title="Ersätt med en av dina">↻</span>' : '<span class="saknas" title="Saknas">✗</span>';
         return "<li>" + status + '<div><span class="roll">' + esc(l.rollnamn) + "</span><strong>" + esc(l.valla.marke + " " + l.valla.namn) + "</strong>" +
+          (l.alt.length ? ' <span class="marke">eller ' + l.alt.map(function (a) { return esc(a.marke + " " + a.namn); }).join(", ") + "</span>" : "") +
+          (l.viaAlt ? ' <span class="marke">→ du har ' + esc(l.viaAlt.marke + " " + l.viaAlt.namn) + "</span>" : "") +
           (!l.har && l.ersatt ? ' <span class="marke">→ ' + (l.hoppaOver ? "hoppa över (du lägger redan " + esc(l.ersatt.marke + " " + l.ersatt.namn) + ")" : "använd din " + esc(l.ersatt.marke + " " + l.ersatt.namn)) + "</span>" : "") + "</div></li>";
       }).join("");
       ol.appendChild(el("li", {},

@@ -14,9 +14,11 @@ Kör:  python3 scripts/hamta_tester.py           (hämtar från nätet)
 Endast standardbiblioteket används.
 """
 import argparse
+import base64
 import datetime as dt
 import email.utils
 import json
+import os
 import pathlib
 import re
 import sys
@@ -135,6 +137,7 @@ def dela_meningar(text):
 ROLLORD = {
     "grund": ["binder", "base", "base layer", "grund", "grundvalla", "grundklister", "bas", "underlag", "underst", "first layer", "festeunderlag"],
     "topp": ["cover", "covered", "covered with", "top", "topcoat", "top coat", "topping", "topped", "overlay", "finish",
+             "thin layer of", "a layer of", "tunt lager", "ett lager",
              "över", "täck", "täckt", "toppa", "toppat", "ovanpå", "överst", "dekk", "over"],
 }
 
@@ -157,40 +160,133 @@ def _roll(fore, efter, typ):
     return {"grund": "grund", "klister": "klister", "hard": "fäste", "glid": "glid"}[typ]
 
 
-def hitta_recept(text, kalla, kalltyp, url, datum, monster, typer):
-    """Hittar kombinationer (flera vallor i samma stycke/lista) och returnerar recept.
+ETIKETT_RE = re.compile(r"^\s*[-•*]?\s*([^\W\d][\w ./&()]{1,30}?)\s*[:–—]\s*(.+)$|^\s*[-•*]?\s*([^\W\d][\w ./&()]{1,25}?)\s+-\s+(.+)$")
+SEKV_RE = re.compile(r"\s*(,?\s*followed by|,?\s*then|,?\s*covered (?:with|by)|,?\s*topped (?:with|by)|,?\s*with a (?:thin )?(?:layer|cover) of|"
+                     r",?\s*täckt med|,?\s*därefter|,?\s*och sedan|,?\s*sedan|,?\s*toppa med|\s\+\s)\s*", re.I)
+ALT_RE = re.compile(r"\s+or\s+|\s+eller\s+|\s+tai\s+|\s+/\s+", re.I)
+SPECIFIK_ETIKETT = re.compile(r"top|cover|finish|topp|täck|överst|binder|base|grund|\bbas\b|underlag", re.I)
+TOPPORD = ("cover", "topped", "täckt", "toppa", "layer of")
+VILLKORSORD = ("if ", "om ", "alternativ", "backup", "warmer", "colder", "varmare", "kallare", "in case")
 
-    Ett recept = ett stycke (avgränsat av tomrad) där minst två olika vallor nämns,
-    t.ex. "Binder: Swix KB20. Klister: KX30 covered with V40" eller en lista med glidlager.
+
+def _etikettroll(etikett, typ):
+    e = etikett.lower()
+    if any(o in e for o in ("top", "cover", "finish", "topp", "täck", "överst")):
+        return "glid-topp" if typ == "glid" else "topp"
+    if typ == "glid":
+        return "glid"
+    if any(o in e for o in ("binder", "base", "grund", "bas", "underlag")):
+        return "grund"
+    return {"grund": "grund", "klister": "klister", "hard": "fäste"}[typ]
+
+
+def tolka_rad(rad, monster, typer):
+    """Tolkar en rad till (etikett, [lager]); varje lager = {valla, alt, roll}.
+
+    "Kick Base: A or B, followed by a thin layer of C" -> grund A (alt B), topp C
+    "Top: X, Y or Z" -> ett lager med alternativen X/Y/Z
+    "PS7 och TS7" (utan "or") -> två lager
+    """
+    m = ETIKETT_RE.match(rad)
+    etikett, rest = ((m.group(1) or m.group(3)), (m.group(2) or m.group(4))) if m else ("", rad)
+    if m and not hitta_vallor_pos(etikett, monster) == []:
+        etikett, rest = "", rad  # "etiketten" var själv ett vallanamn
+    delar = SEKV_RE.split(rest)
+    lager, sedda = [], set()
+    markor = ""
+    for k, steg in enumerate(delar):
+        if k % 2 == 1:  # själva sekvensordet
+            markor = steg.lower()
+            continue
+        harAlt = bool(ALT_RE.search(steg))
+        segment = re.split(r",\s*|" + ALT_RE.pattern, steg, flags=re.I) if harAlt else [steg]
+        grupper = []
+        for seg in segment:
+            ids = [vid for _, _, vid in hitta_vallor_pos(seg, monster) if vid not in sedda]
+            if not ids:
+                continue
+            if harAlt:
+                grupper.append([ids[0]])
+            else:
+                grupper += [[i] for i in ids]
+        if harAlt and grupper:
+            grupper = [list(dict.fromkeys(g[0] for g in grupper))]  # alla alternativ i ett lager
+        for g in grupper:
+            vid = g[0]
+            typ = typer[vid]
+            if k == 0 and etikett and SPECIFIK_ETIKETT.search(etikett):
+                roll = _etikettroll(etikett, typ)
+            elif k > 0 and any(o in markor for o in TOPPORD):
+                roll = "glid-topp" if typ == "glid" else "topp"
+            else:
+                # Ingen etikett: avgör av orden runt namnet ("as base layer", "on top", "covered with").
+                pos = [(a, b) for a, b, v in hitta_vallor_pos(steg, monster) if v == vid]
+                a, b = pos[0] if pos else (0, 0)
+                roll = _roll((markor + " " + steg[:a]).lower() if k > 0 else steg[:a].lower(), steg[b:].lower(), typ)
+            alt = [x for x in g[1:] if x not in sedda]
+            sedda.update(g)
+            lager.append({"valla": vid, "alt": alt, "roll": roll})
+    return etikett, lager
+
+
+def hitta_recept(text, kalla, kalltyp, url, datum, monster, typer):
+    """Hittar kombinationer (flera lager) och returnerar recept.
+
+    Strukturerade avsnitt (rader som "Binder: …", "Kick: … followed by …", "Top: …") blir ett
+    recept per avsnitt (mellan rubriker). Ostrukturerad text: ett recept per stycke med minst
+    två lager. "A or B" tolkas som alternativ i samma lager, inte som två lager.
     """
     ut = []
-    ctx_temp = ctx_sno = None  # förhållanden som nämnts tidigare i texten (t.ex. i inledningen)
-    for block in re.split(r"\n\s*\n", text):
-        if not block.strip():
-            continue
-        b_temp, b_sno = hitta_temp(block), hitta_sno(block)
-        lager, sedda = [], set()
-        for rad in block.split("\n"):
-            pos = hitta_vallor_pos(rad, monster)
-            forra = 0
-            for start, slut, vid in pos:
-                if vid in sedda:
-                    continue
-                sedda.add(vid)
-                lager.append({"valla": vid, "roll": _roll(rad[:start].lower()[forra:] if forra < start else rad[:start].lower(),
-                                                          rad[slut:].lower(), typer[vid])})
-                forra = slut
-        if len(lager) < 2:
-            ctx_temp = b_temp if b_temp is not None else ctx_temp
-            ctx_sno = b_sno or ctx_sno
-            continue
-        kort = re.sub(r"\s+", " ", block).strip()
+    ctx_temp = ctx_sno = None  # förhållanden som nämnts tidigare (rubrik, inledning)
+
+    def nytt(lager, kalltext, t, sno):
+        # Slå ihop lager med samma valla/roll (t.ex. "Binder: A or B" + "Kick Base: A or C").
+        ihop = []
+        for x in lager:
+            lika = next((y for y in ihop if y["roll"] == x["roll"] and (y["valla"] == x["valla"] or x["valla"] in y["alt"])), None)
+            if lika:
+                for a in [x["valla"]] + x["alt"]:
+                    if a != lika["valla"] and a not in lika["alt"]:
+                        lika["alt"].append(a)
+            elif x["valla"] not in {y["valla"] for y in ihop}:
+                ihop.append(dict(x, alt=list(x["alt"])))
+        lager = ihop
+        if len({l["valla"] for l in lager}) < 2:
+            return
+        kort = re.sub(r"\s+", " ", kalltext).strip()
         ut.append({
-            "lager": lager, "temp": b_temp if b_temp is not None else ctx_temp, "sno": b_sno or ctx_sno,
-            "sentiment": omdome(block),
+            "lager": lager, "temp": t, "sno": sno, "sentiment": omdome(kalltext),
             "kalla": kalla, "kalltyp": kalltyp, "url": url, "datum": datum,
-            "text": (kort[:400] + "…") if len(kort) > 400 else kort,
+            "text": (kort[:500] + "…") if len(kort) > 500 else kort,
         })
+
+    avsnitt = re.split(r"\n(?=## )", "\n" + text)
+    for av in avsnitt:
+        if not av.strip():
+            continue
+        a_temp, a_sno = hitta_temp(av), hitta_sno(av)
+        t = a_temp if a_temp is not None else ctx_temp
+        sno = a_sno or ctx_sno
+        rader = [r for r in av.split("\n") if r.strip() and not r.startswith("## ")]
+        tolkade = [(r,) + tolka_rad(r, monster, typer) for r in rader]
+        strukturerade = [(r, e, l) for r, e, l in tolkade if e and l]
+        if len(strukturerade) >= 2 or (strukturerade and sum(len(l) for _, _, l in strukturerade) >= 2):
+            huvud, villkor = [], []
+            for r, e, l in strukturerade:
+                (villkor if any(o in e.lower() for o in VILLKORSORD) else huvud).append((r, e, l))
+            nytt([x for _, _, l in huvud for x in l], "\n".join(r for r, _, _ in huvud), t, sno)
+            for r, e, l in villkor:  # "If it snows: …" blir eget recept om det har flera lager
+                nytt(l, r, hitta_temp(r) if hitta_temp(r) is not None else t, hitta_sno(r) or sno)
+        else:
+            for stycke in re.split(r"\n\s*\n", "\n".join(rader)):
+                lager = []
+                for r in stycke.split("\n"):
+                    for x in tolka_rad(r, monster, typer)[1]:
+                        if x["valla"] not in {y["valla"] for y in lager}:
+                            lager.append(x)
+                s_temp = hitta_temp(stycke)
+                nytt(lager, stycke, s_temp if s_temp is not None else t, hitta_sno(stycke) or sno)
+        ctx_temp, ctx_sno = t, sno
     return ut
 
 
@@ -224,8 +320,37 @@ def _analysera_stycke(stycke, st_temp, st_sno, kalla, url, datum, monster):
     return ut
 
 
+REDDIT_TOKEN = None
+
+
+def reddit_token():
+    """App-inloggning (client credentials) om REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET finns.
+
+    Reddit blockerar anonyma anrop från molnservrar (t.ex. GitHub Actions) med 403.
+    Skapa en gratis app av typen "script" på https://www.reddit.com/prefs/apps.
+    """
+    global REDDIT_TOKEN
+    cid, hemlig = os.environ.get("REDDIT_CLIENT_ID"), os.environ.get("REDDIT_CLIENT_SECRET")
+    if REDDIT_TOKEN or not (cid and hemlig):
+        return REDDIT_TOKEN
+    req = urllib.request.Request(
+        "https://www.reddit.com/api/v1/access_token", data=b"grant_type=client_credentials",
+        headers={"User-Agent": UA, "Authorization": "Basic " + base64.b64encode(f"{cid}:{hemlig}".encode()).decode()})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        REDDIT_TOKEN = json.loads(r.read().decode())["access_token"]
+    return REDDIT_TOKEN
+
+
+def reddit_url(sokvag):
+    """Med token går anropen till oauth.reddit.com, annars till den publika adressen."""
+    return ("https://oauth.reddit.com" if reddit_token() else "https://www.reddit.com") + sokvag
+
+
 def hamta_json(url):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    headers = {"User-Agent": UA}
+    if REDDIT_TOKEN and url.startswith("https://oauth.reddit.com"):
+        headers["Authorization"] = "Bearer " + REDDIT_TOKEN
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.loads(r.read().decode("utf-8"))
 
@@ -238,11 +363,16 @@ def hamta_text(url):
 
 def fran_reddit(cfg, monster):
     ut, sedda = [], set()
+    try:
+        if reddit_token():
+            print("  Reddit: inloggad som app")
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! Reddit-inloggning: {e}", file=sys.stderr)
     paus = cfg.get("paus_sekunder", 1.5)
     kommentarer_kvar = cfg.get("max_kommentartradar", 40)
     for k in cfg.get("reddit", []):
         for q in k["sok"]:
-            url = (f"https://www.reddit.com/r/{k['sub']}/search.json?"
+            url = (reddit_url(f"/r/{k['sub']}/search.json?")
                    + urllib.parse.urlencode({"q": q, "restrict_sr": 1, "sort": "new", "t": "year",
                                              "limit": cfg.get("max_tradar_per_sokning", 25)}))
             try:
@@ -265,7 +395,7 @@ def fran_reddit(cfg, monster):
                 if p.get("num_comments", 0) and kommentarer_kvar > 0:
                     kommentarer_kvar -= 1
                     try:
-                        trad = hamta_json(f"https://www.reddit.com/comments/{p['id']}.json?limit=200")
+                        trad = hamta_json(reddit_url(f"/comments/{p['id']}.json?limit=200"))
                         time.sleep(paus)
                     except Exception as e:  # noqa: BLE001
                         print(f"  ! kommentarer {p['id']}: {e}", file=sys.stderr)
@@ -290,7 +420,7 @@ def plocka_kommentarer(listning):
 def html_till_text(html):
     import html as htmlmod
     html = re.sub(r"(?is)<(script|style|noscript|nav|footer|header|form)[^>]*>.*?</\1>", " ", html)
-    html = re.sub(r"(?i)<h[1-6][^>]*>", "\n\n", html)
+    html = re.sub(r"(?i)<h[1-6][^>]*>", "\n\n## ", html)
     html = re.sub(r"(?i)</h[1-6]>", "\n\n", html)
     html = re.sub(r"(?i)</(p|div|section|article|table|ul|ol)>", "\n\n", html)
     html = re.sub(r"(?i)<br\s*/?>|</(li|tr|dd|dt)>", "\n", html)
@@ -362,6 +492,7 @@ def fran_sidor(cfg, monster, typer):
                         full = urllib.parse.urljoin(s["url"], href)
                         if rx.search(full) and full not in lankar and full != s["url"]:
                             lankar.append(full)
+                    dokument.append((s["url"], sidans_datum(index), index))
                     for lank in lankar[: s.get("max", 15)]:
                         try:
                             html = hamta_text(lank)
@@ -378,6 +509,9 @@ def fran_sidor(cfg, monster, typer):
         idag = dt.date.today().isoformat()
         for url, datum, html in dokument:
             text = html_till_text(html)
+            if DUMPA:
+                namnfil = re.sub(r"[^a-z0-9]+", "-", url.lower())[-120:].strip("-") or "sida"
+                (DUMPA / f"{namnfil}.txt").write_text(f"{namn}\n{url}\n{datum}\n\n{text}", encoding="utf-8")
             for o in analysera(text, namn, url, datum or idag, monster):
                 o["kalltyp"] = typ
                 omn.append(o)
@@ -388,6 +522,7 @@ def fran_sidor(cfg, monster, typer):
 
 RECEPT_REDDIT = []
 TYPER = {}
+DUMPA = None  # katalog för utläst text (felsökning), sätts med --dumpa
 
 
 def skriv(omnamnanden, kallnamn, recept=()):
@@ -414,7 +549,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fil", help="Analysera en lokal textfil i stället för att hämta från nätet")
     ap.add_argument("--torrkorning", action="store_true", help="Skriv inte data/forum.js")
+    ap.add_argument("--dumpa", help="Spara utläst text från varje sida i denna katalog (felsökning)")
     a = ap.parse_args()
+    global DUMPA
+    if a.dumpa:
+        DUMPA = pathlib.Path(a.dumpa)
+        DUMPA.mkdir(parents=True, exist_ok=True)
 
     vallor = las_vallor()
     TYPER.update({v["id"]: v["typ"] for v in vallor})
