@@ -58,9 +58,32 @@ class TestRecept(unittest.TestCase):
         lager = [[(l["valla"], l["roll"], l["alt"]) for l in r["lager"]] for r in rec]
         self.assertIn([("swix-ts5", "glid", []), ("swix-ts7", "glid-topp", ["rode-glid-medel"])], lager)
         self.assertIn([("swix-kb20", "grund", ["rex-grundklister", "rode-grundklister"]),
-                       ("rode-viola-special", "topp", [])], lager)
+                       ("rode-viola-special", "fäste", [])], lager)
         self.assertEqual(len(rec), 2)  # "If it snows: A or B" är ett lager -> inget eget recept
         self.assertAlmostEqual(rec[0]["temp"], -6.7, places=1)
+
+    def test_swix_steg_for_steg(self):
+        text = (pathlib.Path(__file__).parent / "exempel_swix.txt").read_text(encoding="utf-8")
+        rec = h.hitta_recept(text, "Swix", "tillverkare", "", "", M, TYPER)
+        lager = [[(l["valla"], l["roll"]) for l in r["lager"]] for r in rec]
+        # Grundvalla är alltid grund; VP50 (saknades tidigare) kommer med.
+        sv = next(r for r in rec if r["text"].startswith("Rugga"))
+        self.assertEqual([(l["valla"], l["roll"], l["alt"]) for l in sv["lager"]],
+                         [("swix-vg35", "grund", []), ("swix-vp40", "fäste", []), ("swix-vp50", "fäste", ["swix-vp60"])])
+        self.assertIn([("swix-vg35", "grund"), ("swix-vp40", "fäste"), ("swix-vp50", "fäste")], lager)
+        mar = next(r for r in rec if any(l["valla"] == "swix-kn33" for l in r["lager"]))
+        self.assertEqual(mar["lager"][0]["valla"], "swix-kb20")
+        self.assertEqual(mar["lager"][0]["roll"], "grund")
+        self.assertTrue(all(l["roll"] != "topp" for r in rec for l in r["lager"] if TYPER[l["valla"]] == "grund"))
+
+    def test_nytt_bara_vid_verkligt_nya_tips(self):
+        gammal = {"recept": [{"lager": [{"valla": "swix-v40", "roll": "fäste"}, {"valla": "swix-vg35", "roll": "topp"}], "url": "u"}],
+                  "omnamnanden": [{"valla": "swix-v40", "utdrag": "gammal text", "url": "u", "kalltyp": "tillverkare"}]}
+        ny = {"uppdaterad": "2026-01-01T00:00", "recept": [{"lager": [{"valla": "swix-vg35", "roll": "grund"}, {"valla": "swix-v40", "roll": "fäste"}], "url": "u", "kalla": "Swix"}],
+              "omnamnanden": [{"valla": "swix-v40", "utdrag": "ny formulering", "url": "u", "kalltyp": "tillverkare", "kalla": "Swix"}]}
+        self.assertEqual(h.sammanfatta_nytt(gammal, ny, {}), "")
+        ny["omnamnanden"].append({"valla": "swix-kx30", "utdrag": "KX30 idag", "url": "u", "kalltyp": "tillverkare", "kalla": "Swix"})
+        self.assertIn("swix-kx30", h.sammanfatta_nytt(gammal, ny, {}))
 
     def test_roll_efter_namn(self):
         rec = h.hitta_recept("Kick: Swix KX20 binder, Rex blå klister cover. -8C", "x", "butik", "", "", M, TYPER)

@@ -31,7 +31,7 @@
       "namn": "Swix Racing Service – vallatips och testresultat",
       "typ": "tillverkare",
       "url": "https://www.swixsport.com/se/tips/vallatips/racing-service/",
-      "lankmonster": "/tips/vallatips/racing-service/[a-z0-9-]+/?$",
+      "lankmonster": "/(article|tips)/[^\"]*(wax-tips-for-races|vallatips)/[a-z0-9-]+/?$",
       "max": 15
     },
     {
@@ -45,7 +45,7 @@
       "namn": "Swix vallatips Ski Classics",
       "typ": "tillverkare",
       "url": "https://www.swixsport.com/se/tips/vallatips/ski-classics-tips/",
-      "lankmonster": "/ski-classics-tips/[a-z0-9-]+/?$",
+      "lankmonster": "/(article|tips)/[^\"]*(wax-tips-for-races|vallatips)/[a-z0-9-]+/?$",
       "max": 15
     },
     {
@@ -54,11 +54,6 @@
       "rss": "https://www.gearwest.com/blogs/gear-west-blog.atom",
       "filter": "wax",
       "max": 30
-    },
-    {
-      "namn": "Nordic Ski Racer wax room",
-      "typ": "forum",
-      "url": "https://www.nordicskiracer.com/wax-room.asp"
     }
   ],
   "max_tradar_per_sokning": 25,

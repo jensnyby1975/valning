@@ -78,7 +78,7 @@ Varje körning sparar den utlästa texten från alla sidor som artefakten *utlas
 
 `typ` är `tillverkare`, `butik` eller `forum` och styr vikten. Adresserna under `sidor` kunde inte provas från utvecklingsmiljön – kör skriptet och se utskriften; byter en sajt struktur skrivs ett fel ut och övriga källor körs ändå. Läsaren är generell (ren text ur HTML), så de flesta sidor med vallatips fungerar utan specialkod.
 
-GitHub Actions-flödet `.github/workflows/hamta-tester.yml` kör skriptet varje natt och committar ny data. Det kan också startas manuellt under *Actions*.
+GitHub Actions-flödet `.github/workflows/hamta-tester.yml` kör skriptet **tisdagar och fredagar** (och när källorna ändras) och committar ny data. Finns det nya kombinationer eller nya tips från tillverkare/butiker skapas ett ärende *Nya vallatips* med en sammanfattning – du får då en avisering från GitHub (mejl/app) om du bevakar repot. Det kan också startas manuellt under *Actions*.
 
 ## Data
 

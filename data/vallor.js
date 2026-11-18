@@ -106,7 +106,7 @@ window.VALLOR = [
   {"id":"swix-hs7","marke":"Swix","namn":"HS7 Violet (fluorfri glid)","typ":"glid","min":-8,"max":-2,"sno":["ny","finkornig","grovkornig","isig","konst"],"niva":"tävling","alias":["hs7","hs7l","hs 7"]},
   {"id":"swix-hs8","marke":"Swix","namn":"HS8 Red (fluorfri glid)","typ":"glid","min":-4,"max":4,"sno":["ny","finkornig","grovkornig","isig","konst","blot"],"niva":"tävling","alias":["hs8","hs8l","hs 8"]},
   {"id":"swix-hs10","marke":"Swix","namn":"HS10 Yellow (fluorfri glid)","typ":"glid","min":0,"max":10,"sno":["grovkornig","blot","ny"],"niva":"tävling","alias":["hs10","hs10l","hs 10"]},
-  {"id":"swix-marathon","marke":"Swix","namn":"Marathon (fluorfri glid, bred)","typ":"glid","min":-20,"max":5,"sno":["ny","finkornig","grovkornig","isig","konst","blot"],"niva":"tävling","alias":["swix marathon","marathon white","marathon black"]},
+  {"id":"swix-marathon","marke":"Swix","namn":"Marathon (fluorfri glid, bred)","typ":"glid","min":-20,"max":5,"sno":["ny","finkornig","grovkornig","isig","konst","blot"],"niva":"tävling","alias":["swix marathon","marathon white","marathon black","marathon powder","marathon pulver","dhp vit marathon","dhp marathon"]},
   {"id":"rode-glid-kall","marke":"Rode","namn":"Glid Kall (RL/RX Cold)","typ":"glid","min":-20,"max":-8,"sno":["ny","finkornig","grovkornig","isig","konst"],"niva":"tävling","alias":["rode rl cold","rode rx cold","rode cold"]},
   {"id":"rode-glid-medel","marke":"Rode","namn":"Glid Medel (RL/RX Med)","typ":"glid","min":-10,"max":-2,"sno":["ny","finkornig","grovkornig","isig","konst"],"niva":"tävling","alias":["rode rl med","rode rx med","rode rl mid","rode rx mid","rode med"]},
   {"id":"rode-glid-varm","marke":"Rode","namn":"Glid Varm (RL/RX Warm)","typ":"glid","min":-3,"max":5,"sno":["grovkornig","blot","ny"],"niva":"tävling","alias":["rode rl warm","rode rx warm","rode warm"]},
@@ -114,5 +114,10 @@ window.VALLOR = [
   {"id":"rode-grundklister","marke":"Rode","namn":"Grundklister (spray)","typ":"grund","min":-30,"max":10,"sno":["grovkornig","isig","konst","blot"],"niva":"trän","alias":["rode base klister spray","rode base klister","rode chola"]},
   {"id":"start-terva-bla","marke":"Start","namn":"Terva (tjära) Blå","typ":"hard","min":-10,"max":-3,"sno":["ny","finkornig","konst"],"niva":"trän","alias":["start terva blue","start tar blue","start terva blå"]},
   {"id":"start-terva-lila","marke":"Start","namn":"Terva (tjära) Lila","typ":"hard","min":-3,"max":0,"sno":["ny","finkornig","konst"],"niva":"trän","alias":["start terva purple","start terva violet","start tar purple","start terva lila"]},
-  {"id":"start-terva-rod","marke":"Start","namn":"Terva (tjära) Röd","typ":"hard","min":-1,"max":2,"sno":["ny","finkornig"],"niva":"trän","alias":["start terva red","start tar red","start terva röd"]}
+  {"id":"start-terva-rod","marke":"Start","namn":"Terva (tjära) Röd","typ":"hard","min":-1,"max":2,"sno":["ny","finkornig"],"niva":"trän","alias":["start terva red","start tar red","start terva röd"]},
+  {"id":"swix-vp50","marke":"Swix","namn":"VP50 Light Violet","typ":"hard","min":-4,"max":-1,"sno":["ny","finkornig","konst"],"niva":"tävling","alias":["vp50"]},
+  {"id":"swix-vp60","marke":"Swix","namn":"VP60 Violet/Red","typ":"hard","min":-1,"max":1,"sno":["ny","finkornig"],"niva":"tävling","alias":["vp60"]},
+  {"id":"swix-kn33","marke":"Swix","namn":"KN33 Nero Klister","typ":"klister","min":-3,"max":3,"sno":["grovkornig","isig","blot","konst"],"niva":"tävling","alias":["kn33","nero klister kn33","kn33 nero"]},
+  {"id":"swix-kn44","marke":"Swix","namn":"KN44 Nero Klister (varm)","typ":"klister","min":0,"max":6,"sno":["grovkornig","blot"],"niva":"tävling","alias":["kn44","kn44 nero"]},
+  {"id":"rode-endurance","marke":"Rode","namn":"Endurance (glid, bred)","typ":"glid","min":-15,"max":2,"sno":["ny","finkornig","grovkornig","isig","konst"],"niva":"tävling","alias":["rode endurance"]}
 ];

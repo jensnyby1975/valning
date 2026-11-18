@@ -131,19 +131,22 @@ def omdome(mening):
 
 
 def dela_meningar(text):
-    return [m.strip() for m in re.split(r"(?<=[.!?\n])\s+", text) if m.strip()]
+    # Dela även vid fotnotsstjärnor ("… klister .* * Late starters …").
+    return [m.strip(" *") for m in re.split(r"(?<=[.!?\n])[\s*]*\s+|\s\*+\s", text) if m.strip(" *")]
 
 
 ROLLORD = {
     "grund": ["binder", "base", "base layer", "grund", "grundvalla", "grundklister", "bas", "underlag", "underst", "first layer", "festeunderlag"],
     "topp": ["cover", "covered", "covered with", "top", "topcoat", "top coat", "topping", "topped", "overlay", "finish",
-             "thin layer of", "a layer of", "tunt lager", "ett lager",
+             "täcka",
              "över", "täck", "täckt", "toppa", "toppat", "ovanpå", "överst", "dekk", "over"],
 }
 
 
 def _roll(fore, efter, typ):
     """Bestämmer lagrets roll utifrån ord nära vallanamnet och vallans typ."""
+    if typ == "grund":
+        return "grund"  # en grundvalla/grundklister är aldrig ett topplager
     def har(t, lista):
         return any(re.search(r"(?<![\w])" + re.escape(o) + r"(?![\w])", t) for o in lista)
     narfore = fore[-30:]
@@ -163,7 +166,8 @@ def _roll(fore, efter, typ):
 ETIKETT_RE = re.compile(r"^\s*[-•*]?\s*([^\W\d][\w ./&()]{1,30}?)\s*[:–—]\s*(.+)$|^\s*[-•*]?\s*([^\W\d][\w ./&()]{1,25}?)\s+-\s+(.+)$")
 SEKV_RE = re.compile(r"\s*(,?\s*followed by|,?\s*then|,?\s*covered (?:with|by)|,?\s*topped (?:with|by)|,?\s*with a (?:thin )?(?:layer|cover) of|"
                      r",?\s*täckt med|,?\s*därefter|,?\s*och sedan|,?\s*sedan|,?\s*toppa med|\s\+\s)\s*", re.I)
-ALT_RE = re.compile(r"\s+or\s+|\s+eller\s+|\s+tai\s+|\s+/\s+", re.I)
+ALT_RE = re.compile(r"\s+or\s+|\s+eller\s+|\s+alternativt\s+|\s+alternatively\s+|\s+tai\s+|\s+/\s+", re.I)
+ALT_MENING_RE = re.compile(r"^\s*(alternativ(?:ely|t)?|or|eller|om det)\b|\b(instead|istället|i stället|ta med|bring|backup|reserv)\b", re.I)
 SPECIFIK_ETIKETT = re.compile(r"top|cover|finish|topp|täck|överst|binder|base|grund|\bbas\b|underlag", re.I)
 TOPPORD = ("cover", "topped", "täckt", "toppa", "layer of")
 VILLKORSORD = ("if ", "om ", "alternativ", "backup", "warmer", "colder", "varmare", "kallare", "in case")
@@ -171,6 +175,8 @@ VILLKORSORD = ("if ", "om ", "alternativ", "backup", "warmer", "colder", "varmar
 
 def _etikettroll(etikett, typ):
     e = etikett.lower()
+    if typ == "grund":
+        return "grund"
     if any(o in e for o in ("top", "cover", "finish", "topp", "täck", "överst")):
         return "glid-topp" if typ == "glid" else "topp"
     if typ == "glid":
@@ -283,10 +289,17 @@ def hitta_recept(text, kalla, kalltyp, url, datum, monster, typer):
         else:
             for stycke in re.split(r"\n\s*\n", "\n".join(rader)):
                 lager = []
-                for r in stycke.split("\n"):
-                    for x in tolka_rad(r, monster, typer)[1]:
-                        if x["valla"] not in {y["valla"] for y in lager}:
-                            lager.append(x)
+                # Mening för mening: "or" i en mening ska inte göra hela stycket till alternativ.
+                for mening in (m for r in stycke.split("\n") for m in dela_meningar(r)):
+                    tolkat = [x for x in tolka_rad(mening, monster, typer)[1]
+                              if x["valla"] not in {y["valla"] for y in lager} and not any(x["valla"] in y["alt"] for y in lager)]
+                    if lager and tolkat and ALT_MENING_RE.search(mening):
+                        # "Alternatively, apply KX20" / "consider KN44 instead" -> alternativ till senaste lagret av samma slag
+                        mal = next((y for y in reversed(lager) if typer[y["valla"]] == typer[tolkat[0]["valla"]]), lager[-1])
+                        for x in tolkat:
+                            mal["alt"].append(x["valla"])
+                        continue
+                    lager += tolkat
                 s_temp = hitta_temp(stycke)
                 nytt(lager, stycke, s_temp if s_temp is not None else t, hitta_sno(stycke) or sno)
         ctx_temp, ctx_sno = t, sno
@@ -468,6 +481,7 @@ def flodesposter(xml):
 def fran_sidor(cfg, monster, typer):
     """Tillverkare, butiker och bloggar: RSS/Atom-flöden eller indexsidor med länkar till artiklar."""
     omn, recept = [], []
+    hamtade = set()  # samma artikel kan länkas från flera indexsidor
     paus = cfg.get("paus_sekunder", 1.5)
     for s in cfg.get("sidor", []) + [dict(r, typ=r.get("typ", "forum")) for r in cfg.get("rss", [])]:
         namn, typ = s.get("namn", s.get("url") or s.get("rss")), s.get("typ", "forum")
@@ -497,6 +511,9 @@ def fran_sidor(cfg, monster, typer):
                             lankar.append(full)
                     dokument.append((s["url"], sidans_datum(index), index))
                     for lank in lankar[: s.get("max", 15)]:
+                        if lank in hamtade:
+                            continue
+                        hamtade.add(lank)
                         try:
                             html = hamta_text(lank)
                             time.sleep(paus)
@@ -537,16 +554,22 @@ def las_befintlig():
 
 
 def receptnyckel(r):
-    return "+".join(l["valla"] for l in r["lager"]) + "|" + (r.get("url") or "")
+    # Bara vilka vallor och källa – inte roller eller text, så att ändrad tolkning inte ger falsklarm.
+    return "+".join(sorted(l["valla"] for l in r["lager"])) + "|" + (r.get("url") or "")
 
 
 def sammanfatta_nytt(gammal, ny, namn):
     """Markdown med recept och tillverkar-/butikstips som inte fanns i förra körningen."""
     gamla_r = {receptnyckel(r) for r in gammal.get("recept", [])}
-    gamla_o = {(o["valla"], o["utdrag"]) for o in gammal.get("omnamnanden", [])}
+    gamla_o = {(o["valla"], o.get("url") or o["utdrag"]) for o in gammal.get("omnamnanden", [])}
     nya_r = [r for r in ny["recept"] if receptnyckel(r) not in gamla_r]
-    nya_o = [o for o in ny["omnamnanden"] if (o["valla"], o["utdrag"]) not in gamla_o
-             and o.get("kalltyp") in ("tillverkare", "butik")]
+    nya_o, sedda = [], set()
+    for o in ny["omnamnanden"]:
+        k = (o["valla"], o.get("url") or o["utdrag"])
+        if k in gamla_o or k in sedda or o.get("kalltyp") not in ("tillverkare", "butik"):
+            continue
+        sedda.add(k)
+        nya_o.append(o)
     if not nya_r and not nya_o:
         return ""
     def vnamn(vid):
