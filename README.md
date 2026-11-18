@@ -16,6 +16,8 @@ Appen kan installeras på hemskärmen och fungerar offline (väder kräver nät)
 
 `python3 scripts/bygg_enfil.py ut.html` bygger en fristående enfilsversion utan väderhämtning.
 
+### Användning
+
 1. **Förhållanden** – skriv en ort (eller 📍) och tidpunkt och tryck *Hämta väder*. Temperatur och luftfuktighet hämtas från Open-Meteo och snötypen gissas från de senaste 72 timmarnas väder (nysnö, regn, plusgrader). Justera om du ser något annat i spåret.
 2. **Dina vallor** – välj *Mina märken* (t.ex. Swix + Rex) eller *Mina vallor* och bocka i det du har. Saknas en valla kan du lägga till den själv.
 3. **Rekommendation** – topp 3 glid och topp 3 fäste (hårdvalla eller klister beroende på snön), grundvalla, topplager över klister, samt tips för förhållandena. Finns det en klart bättre valla som du inte har visas den också.
