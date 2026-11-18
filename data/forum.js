@@ -1,6 +1,6 @@
 // Genererad av scripts/hamta_tester.py – redigera inte för hand.
 window.FORUM = {
- "uppdaterad": "2026-11-18T16:55+00:00",
+ "uppdaterad": "2026-11-18T17:04+00:00",
  "kallor": [
   "reddit r/xcountryskiing",
   "reddit r/langrenn",
