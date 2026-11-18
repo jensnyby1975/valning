@@ -1,6 +1,6 @@
 // Genererad av scripts/hamta_tester.py – redigera inte för hand.
 window.FORUM = {
- "uppdaterad": "2026-11-18T16:53+00:00",
+ "uppdaterad": "2026-11-18T16:55+00:00",
  "kallor": [
   "reddit r/xcountryskiing",
   "reddit r/langrenn",
@@ -8,8 +8,7 @@ window.FORUM = {
   "Swix Racing Service – vallatips och testresultat",
   "Swix vallatips inför lopp",
   "Swix vallatips Ski Classics",
-  "Gear West vallarekommendationer",
-  "Nordic Ski Racer wax room"
+  "Gear West vallarekommendationer"
  ],
  "omnamnanden": [
   {
@@ -46,6 +45,17 @@ window.FORUM = {
    "kalltyp": "tillverkare"
   },
   {
+   "valla": "swix-kn33",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/skarverennet",
+   "datum": "2026-11-18",
+   "utdrag": "Bring a good scraper, cork and Swix KN33 Nero klister for adjustments along the way.",
+   "kalltyp": "tillverkare"
+  },
+  {
    "valla": "swix-hs6",
    "temp": null,
    "sno": null,
@@ -76,6 +86,17 @@ window.FORUM = {
    "url": "https://swixsport.com/eu/article/wax-tips-for-races/skarverennet",
    "datum": "2026-11-18",
    "utdrag": "Swix PF100 WC powder or TSP10 yellow powder is ironed in.",
+   "kalltyp": "tillverkare"
+  },
+  {
+   "valla": "swix-marathon",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/vasaloppet",
+   "datum": "2026-11-18",
+   "utdrag": "Värm in DHP vit marathon pulver alternativt TSP6 eller PF35 på 160°C.",
    "kalltyp": "tillverkare"
   },
   {
@@ -145,6 +166,39 @@ window.FORUM = {
    "kalltyp": "tillverkare"
   },
   {
+   "valla": "swix-vp50",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/vasaloppet",
+   "datum": "2026-11-18",
+   "utdrag": "Lägg 2-4 tunna lager av VP50 (violett).",
+   "kalltyp": "tillverkare"
+  },
+  {
+   "valla": "swix-vp60",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/vasaloppet",
+   "datum": "2026-11-18",
+   "utdrag": "Ta med VP60 vid glatte ski.",
+   "kalltyp": "tillverkare"
+  },
+  {
+   "valla": "swix-marathon",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/vasaloppet",
+   "datum": "2026-11-18",
+   "utdrag": "Iron in one layer of DHP marathon powder alternatively TSP6 or PF35 at 160°C.",
+   "kalltyp": "tillverkare"
+  },
+  {
    "valla": "swix-ts6",
    "temp": null,
    "sno": null,
@@ -200,6 +254,17 @@ window.FORUM = {
    "kalltyp": "tillverkare"
   },
   {
+   "valla": "swix-vp50",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/vasaloppet",
+   "datum": "2026-11-18",
+   "utdrag": "Apply 2-4 layers of VP50.",
+   "kalltyp": "tillverkare"
+  },
+  {
    "valla": "swix-hs7",
    "temp": null,
    "sno": null,
@@ -208,6 +273,17 @@ window.FORUM = {
    "url": "https://swixsport.com/eu/article/wax-tips-for-races/marcialonga",
    "datum": "2026-11-18",
    "utdrag": "Apply Swix HS7L Liquid .",
+   "kalltyp": "tillverkare"
+  },
+  {
+   "valla": "swix-marathon",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/marcialonga",
+   "datum": "2026-11-18",
+   "utdrag": "Then apply: Swix DHP White Marathon powder , or",
    "kalltyp": "tillverkare"
   },
   {
@@ -233,7 +309,40 @@ window.FORUM = {
    "kalltyp": "tillverkare"
   },
   {
+   "valla": "swix-kn33",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/marcialonga",
+   "datum": "2026-11-18",
+   "utdrag": "Apply one layer of KN33 Nero klister .",
+   "kalltyp": "tillverkare"
+  },
+  {
+   "valla": "swix-kn44",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Swix vallatips inför lopp",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/marcialonga",
+   "datum": "2026-11-18",
+   "utdrag": "Late starters should concider using KN44 Nero klister instead.",
+   "kalltyp": "tillverkare"
+  },
+  {
    "valla": "swix-marathon",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Gear West vallarekommendationer",
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-26-wax-recommendations",
+   "datum": "2025-12-11",
+   "utdrag": "Base: Swix Marathon powder white or Rode Endurance",
+   "kalltyp": "butik"
+  },
+  {
+   "valla": "rode-endurance",
    "temp": null,
    "sno": null,
    "sentiment": 0,
@@ -263,6 +372,17 @@ window.FORUM = {
    "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-26-wax-recommendations",
    "datum": "2025-12-11",
    "utdrag": "Binder: Swix Base klister spray or Rex Base klister",
+   "kalltyp": "butik"
+  },
+  {
+   "valla": "swix-kn44",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Gear West vallarekommendationer",
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-26-wax-recommendations",
+   "datum": "2025-12-11",
+   "utdrag": "Klister: Swix Nero KN44 mixed with Swix KX55",
    "kalltyp": "butik"
   },
   {
@@ -299,6 +419,17 @@ window.FORUM = {
    "kalltyp": "butik"
   },
   {
+   "valla": "swix-kn44",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Gear West vallarekommendationer",
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-26-wax-recommendations",
+   "datum": "2025-12-11",
+   "utdrag": "Klister: Swix KN44 Nero mixed with Swix KX55",
+   "kalltyp": "butik"
+  },
+  {
    "valla": "swix-vp65",
    "temp": null,
    "sno": null,
@@ -332,6 +463,17 @@ window.FORUM = {
    "kalltyp": "butik"
   },
   {
+   "valla": "rode-endurance",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Gear West vallarekommendationer",
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-pepsi-challenge-wax-recommendation",
+   "datum": "2025-02-27",
+   "utdrag": "Base : Swix Marathon clean powder or Rode Endurance",
+   "kalltyp": "butik"
+  },
+  {
    "valla": "swix-ts5",
    "temp": null,
    "sno": null,
@@ -340,6 +482,17 @@ window.FORUM = {
    "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-mora-vasaloppet-wax-recommendation",
    "datum": "2025-02-06",
    "utdrag": "Paraffin : Swix TSP5",
+   "kalltyp": "butik"
+  },
+  {
+   "valla": "rode-endurance",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Gear West vallarekommendationer",
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/city-of-lakes-loppet-wax-recommendation",
+   "datum": "2025-01-30",
+   "utdrag": "Base : Rode Endurance or Swix Marathon powder",
    "kalltyp": "butik"
   },
   {
@@ -420,6 +573,17 @@ window.FORUM = {
    "kalltyp": "butik"
   },
   {
+   "valla": "rode-endurance",
+   "temp": null,
+   "sno": null,
+   "sentiment": 0,
+   "kalla": "Gear West vallarekommendationer",
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/wax-recommendation-january-25-46",
+   "datum": "2025-01-23",
+   "utdrag": "Paraffin - Swix Marathon Powder or Rode Endurance",
+   "kalltyp": "butik"
+  },
+  {
    "valla": "swix-marathon",
    "temp": null,
    "sno": null,
@@ -457,7 +621,9 @@ window.FORUM = {
     },
     {
      "valla": "swix-vp65",
-     "alt": [],
+     "alt": [
+      "swix-kn33"
+     ],
      "roll": "fäste"
     }
    ],
@@ -500,8 +666,10 @@ window.FORUM = {
   {
    "lager": [
     {
-     "valla": "swix-ts6",
-     "alt": [],
+     "valla": "swix-marathon",
+     "alt": [
+      "swix-ts6"
+     ],
      "roll": "glid"
     },
     {
@@ -524,12 +692,19 @@ window.FORUM = {
     {
      "valla": "swix-vg35",
      "alt": [],
-     "roll": "topp"
+     "roll": "grund"
     },
     {
      "valla": "swix-vp40",
      "alt": [],
-     "roll": "topp"
+     "roll": "fäste"
+    },
+    {
+     "valla": "swix-vp50",
+     "alt": [
+      "swix-vp60"
+     ],
+     "roll": "fäste"
     }
    ],
    "temp": null,
@@ -546,10 +721,15 @@ window.FORUM = {
     {
      "valla": "swix-vg35",
      "alt": [],
-     "roll": "topp"
+     "roll": "grund"
     },
     {
      "valla": "swix-vp40",
+     "alt": [],
+     "roll": "fäste"
+    },
+    {
+     "valla": "swix-vp50",
      "alt": [],
      "roll": "fäste"
     }
@@ -567,12 +747,16 @@ window.FORUM = {
    "lager": [
     {
      "valla": "swix-kb20",
-     "alt": [],
-     "roll": "topp"
+     "alt": [
+      "swix-kx20"
+     ],
+     "roll": "grund"
     },
     {
-     "valla": "swix-kx20",
-     "alt": [],
+     "valla": "swix-kn33",
+     "alt": [
+      "swix-kn44"
+     ],
      "roll": "klister"
     }
    ],
@@ -590,6 +774,30 @@ window.FORUM = {
     {
      "valla": "swix-kb20",
      "alt": [
+      "rex-grundklister"
+     ],
+     "roll": "grund"
+    },
+    {
+     "valla": "swix-kn44",
+     "alt": [],
+     "roll": "klister"
+    }
+   ],
+   "temp": null,
+   "sno": "ny",
+   "sentiment": 0,
+   "kalla": "Gear West vallarekommendationer",
+   "kalltyp": "butik",
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-26-wax-recommendations",
+   "datum": "2025-12-11",
+   "text": "Base: Swix Marathon powder white or Rode Endurance Binder: Swix Base klister spray or Rex Base klister Klister: Swix Nero KN44 mixed with Swix KX55 Base: Swix Marathon White Powder or Star Durable powder, if you don't have an iron use Star Durable liquid Binder: Swix Base klister spray or Toko Base klister Klister: Swix KN44 Nero mixed with Swix KX55"
+  },
+  {
+   "lager": [
+    {
+     "valla": "swix-kb20",
+     "alt": [
       "rode-grundklister"
      ],
      "roll": "grund"
@@ -597,7 +805,7 @@ window.FORUM = {
     {
      "valla": "rode-viola-special",
      "alt": [],
-     "roll": "topp"
+     "roll": "fäste"
     }
    ],
    "temp": null,
@@ -612,8 +820,10 @@ window.FORUM = {
   {
    "lager": [
     {
-     "valla": "swix-marathon",
-     "alt": [],
+     "valla": "rode-endurance",
+     "alt": [
+      "swix-marathon"
+     ],
      "roll": "glid"
     },
     {
