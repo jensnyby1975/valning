@@ -38,5 +38,36 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res["rex-bla-klister"]["sno"], "isig")
 
 
+TYPER = {v["id"]: v["typ"] for v in h.las_vallor()}
+
+
+class TestRecept(unittest.TestCase):
+    def test_tillverkarsida(self):
+        html = (pathlib.Path(__file__).parent / "exempel_tillverkare.html").read_text(encoding="utf-8")
+        self.assertEqual(h.sidans_datum(html), "2026-02-28")
+        rec = h.hitta_recept(h.html_till_text(html), "Swix", "tillverkare", "", "2026-02-28", M, TYPER)
+        lager = [[(l["valla"], l["roll"]) for l in r["lager"]] for r in rec]
+        self.assertIn([("swix-kb20", "grund"), ("swix-kx30", "klister"), ("swix-v40", "topp")], lager)
+        self.assertIn([("swix-ps7", "glid"), ("swix-ts7", "glid-topp")], lager)
+        self.assertIn([("swix-kx45", "klister"), ("swix-v45", "topp")], lager)
+        self.assertTrue(all(r["temp"] == -6 for r in rec))
+
+    def test_roll_efter_namn(self):
+        rec = h.hitta_recept("Kick: Swix KX20 binder, Rex blå klister cover. -8C", "x", "butik", "", "", M, TYPER)
+        self.assertEqual([(l["valla"], l["roll"]) for l in rec[0]["lager"]],
+                         [("swix-kx20", "grund"), ("rex-bla-klister", "topp")])
+
+    def test_en_valla_ar_inget_recept(self):
+        self.assertEqual(h.hitta_recept("V40 funkade bra i -5 grader", "x", "forum", "", "", M, TYPER), [])
+
+    def test_atom_flode(self):
+        xml = """<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Weekend wax</title>
+        <link href="https://ex.com/a"/><published>2026-01-10T08:00:00Z</published>
+        <content type="html">&lt;p&gt;Swix KX30 covered with V40&lt;/p&gt;</content></entry></feed>"""
+        (titel, lank, datum, innehall), = h.flodesposter(xml)
+        self.assertEqual((titel, lank, datum), ("Weekend wax", "https://ex.com/a", "2026-01-10"))
+        self.assertIn("KX30", innehall)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -78,3 +78,25 @@ test("snötypsgissning", () => {
   assert.strictEqual(M.gissaSnotyp({ tempNu: 3, tempMax72: 5, nysno48: 0, regn48: 4 }), "blot");
   assert.strictEqual(M.gissaSnotyp({ tempNu: -8, tempMax72: -4, nysno48: 0, regn48: 0 }), "finkornig");
 });
+
+test("recept: matchar förhållanden och föreslår ersättare", () => {
+  const forum = { omnamnanden: [], recept: [{ lager: [{ valla: "swix-kb20", roll: "grund" }, { valla: "swix-kx30", roll: "klister" }, { valla: "swix-v40", roll: "topp" }],
+    temp: -6, sno: "isig", sentiment: 0, kalla: "Swix", kalltyp: "tillverkare", url: "", text: "x" }] };
+  const mina = new Set(["rex-bla-klister", "rex-bla", "swix-kb20"]);
+  const r = M.rekommenderaRecept({ temp: -6, sno: "isig" }, VALLOR, (v) => mina.has(v.id), { forum, kunskap: KUNSKAP });
+  assert.ok(r.length >= 1);
+  const swix = r.find((x) => x.recept.kalltyp === "tillverkare");
+  assert.ok(swix, "tillverkarreceptet ska finnas");
+  const kx30 = swix.rader.find((x) => x.valla.id === "swix-kx30");
+  assert.strictEqual(kx30.har, false);
+  assert.strictEqual(kx30.ersatt.id, "rex-bla-klister");
+  assert.strictEqual(swix.rader[0].har, true);
+  // Ett recept för +5 blött ska inte komma med vid -6
+  assert.ok(!r.some((x) => x.rader.some((y) => y.valla.id === "swix-kx75")));
+});
+
+test("egna tester med flera lager blir recept", () => {
+  const t = [{ valla: "swix-kx30", lager: ["swix-v40"], temp: -5, sno: "isig", betyg: 5, datum: "2026-01-01" }];
+  const r = M.rekommenderaRecept({ temp: -5, sno: "isig" }, VALLOR, () => true, { egnaTester: t });
+  assert.strictEqual(r[0].recept.kalltyp, "eget");
+});

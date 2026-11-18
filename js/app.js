@@ -114,7 +114,7 @@
           r.evidens.map(function (p) {
             var kl = p.vikt > 0.05 ? "pos" : p.vikt < -0.05 ? "neg" : "";
             var kalla = p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.kalla) + "</a>" : esc(p.kalla);
-            return '<li class="' + kl + '">“' + esc(p.text) + '” <span class="marke">– ' + kalla + (p.temp != null ? ", " + esc(M.fmtT(p.temp)) : "") + (p.datum ? ", " + esc(p.datum) : "") + "</span></li>";
+            return '<li class="' + kl + '">“' + esc(p.text) + '” <span class="marke">– ' + (p.typ === "tillverkare" ? "Tillverkare: " : p.typ === "butik" ? "Butik: " : "") + kalla + (p.temp != null ? ", " + esc(M.fmtT(p.temp)) : "") + (p.datum ? ", " + esc(p.datum) : "") + "</span></li>";
           }).join("") + "</ul></details>";
       }
       ol.appendChild(el("li", {},
@@ -122,6 +122,29 @@
         (v.niva === "tävling" ? '<span class="marke">tävling</span>' : "") + '<span class="marke" style="margin-left:auto">' + Math.round(r.poang * 100) + " %</span></div>" +
         '<div class="matare" title="Passning ' + Math.round(r.poang * 100) + '%"><span style="width:' + Math.round(r.poang * 100) + '%"></span></div>' +
         '<ul class="skal">' + r.skal.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>" + ev));
+    });
+  }
+
+  function ritaRecept(lista) {
+    var ol = $("resRecept"); ol.innerHTML = "";
+    if (!lista.length) { ol.appendChild(el("li", { "class": "tom" }, "Inga kända kombinationer för de här förhållandena ännu. Hämta mer data eller logga dina egna.")); return; }
+    lista.forEach(function (x) {
+      var r = x.recept;
+      var kalla = r.url ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.kalla) + "</a>" : esc(r.kalla);
+      var villkor = [r.tMin != null ? M.fmtT(r.tMax) + " till " + M.fmtT(r.tMin) : r.temp != null ? M.fmtT(r.temp) : null,
+        Array.isArray(r.sno) ? r.sno.map(function (k) { return (M.SNOTYPER[k] || k).toLowerCase(); }).join(" / ") : r.sno ? (M.SNOTYPER[r.sno] || r.sno).toLowerCase() : null,
+        r.datum].filter(Boolean).join(" · ");
+      var lager = x.rader.map(function (l) {
+        var status = l.har ? '<span class="har" title="Du har den">✓</span>'
+          : l.ersatt ? '<span class="ersatt" title="Ersätt med en av dina">↻</span>' : '<span class="saknas" title="Saknas">✗</span>';
+        return "<li>" + status + '<div><span class="roll">' + esc(l.rollnamn) + "</span><strong>" + esc(l.valla.marke + " " + l.valla.namn) + "</strong>" +
+          (!l.har && l.ersatt ? ' <span class="marke">→ ' + (l.hoppaOver ? "hoppa över (du lägger redan " + esc(l.ersatt.marke + " " + l.ersatt.namn) + ")" : "använd din " + esc(l.ersatt.marke + " " + l.ersatt.namn)) + "</span>" : "") + "</div></li>";
+      }).join("");
+      ol.appendChild(el("li", {},
+        '<div class="resrubrik"><span class="kalltyp ' + esc(r.kalltyp || "forum") + '">' + esc(x.kalltypNamn) + "</span>" +
+        '<span class="marke">' + kalla + (x.antalKallor > 1 ? " +" + (x.antalKallor - 1) + " källa" + (x.antalKallor > 2 ? "or" : "") : "") + "</span>" + (x.harAlla ? '<span class="marke" style="margin-left:auto">du har allt</span>' : "") + "</div>" +
+        (villkor ? '<p class="villkor">' + esc(villkor) + "</p>" : "") + '<ul class="lager">' + lager + "</ul>" +
+        (r.text ? '<details class="evidens"><summary>Originaltext</summary><p>' + esc(r.text) + "</p></details>" : "")));
     });
   }
 
@@ -149,6 +172,8 @@
         extra.appendChild(el("p", { "class": "notis" }, (p[0] === "glid" ? "Glid" : "Fäste") + ": bästa träffen oavsett märke/låda är <strong>" + esc(b.valla.marke + " " + b.valla.namn) + "</strong> (" + Math.round(b.poang * 100) + " % passning)."));
       }
     });
+
+    ritaRecept(M.rekommenderaRecept(f, allaVallor(), tillgangligt, kallor, 4));
 
     $("resTips").innerHTML = r.tips.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
   }
@@ -227,17 +252,20 @@
 
   // ---------- Egna tester ----------
   function fyllTestValla() {
-    var s = $("testValla"); s.innerHTML = "";
-    allaVallor().forEach(function (v) {
-      s.appendChild(el("option", { value: v.id }, esc(v.marke + " " + v.namn + " (" + TYPNAMN[v.typ] + ")")));
+    ["testValla", "testLager2", "testLager3"].forEach(function (id, i) {
+      var s = $(id); s.innerHTML = "";
+      if (i > 0) s.appendChild(el("option", { value: "" }, "–"));
+      allaVallor().forEach(function (v) {
+        s.appendChild(el("option", { value: v.id }, esc(v.marke + " " + v.namn + " (" + TYPNAMN[v.typ] + ")")));
+      });
     });
   }
   function ritaTester() {
     var ul = $("testLista"); ul.innerHTML = "";
     if (!state.tester.length) { ul.appendChild(el("li", { "class": "tom" }, "Inga tester ännu.")); return; }
     state.tester.slice().reverse().forEach(function (t) {
-      var v = hittaValla(t.valla);
-      var li = el("li", {}, "<span>" + esc(t.datum) + "</span><strong>" + esc(v ? v.marke + " " + v.namn : t.valla) + "</strong><span>" +
+      var namn = [t.valla].concat(t.lager || []).map(function (id) { var v = hittaValla(id); return v ? v.marke + " " + v.namn : id; }).join(" + ");
+      var li = el("li", {}, "<span>" + esc(t.datum) + "</span><strong>" + esc(namn) + "</strong><span>" +
         esc(M.fmtT(t.temp)) + ", " + esc((M.SNOTYPER[t.sno] || "").toLowerCase()) + "</span><span>" + "★".repeat(t.betyg) + "☆".repeat(5 - t.betyg) +
         "</span>" + (t.kommentar ? '<span class="marke">' + esc(t.kommentar) + "</span>" : "") + '<button type="button" class="sekundar">Ta bort</button>');
       li.querySelector("button").onclick = function () { state.tester = state.tester.filter(function (x) { return x !== t; }); spara(); ritaTester(); rakna(); };
@@ -249,8 +277,9 @@
   $("testForm").onsubmit = function (e) {
     e.preventDefault();
     var f = e.target;
-    state.tester.push({ datum: f.datum.value, temp: parseFloat(f.temp.value), sno: f.sno.value, valla: f.valla.value, betyg: parseInt(f.betyg.value, 10), kommentar: f.kommentar.value.trim() });
-    spara(); f.kommentar.value = ""; ritaTester(); rakna();
+    var lager = [f.lager2.value, f.lager3.value].filter(function (x) { return x && x !== f.valla.value; });
+    state.tester.push({ datum: f.datum.value, temp: parseFloat(f.temp.value), sno: f.sno.value, valla: f.valla.value, lager: lager, betyg: parseInt(f.betyg.value, 10), kommentar: f.kommentar.value.trim() });
+    spara(); f.kommentar.value = ""; f.lager2.value = ""; f.lager3.value = ""; ritaTester(); rakna();
   };
   $("exportera").onclick = function () {
     var json = JSON.stringify({ tester: state.tester, egna: state.egna }, null, 1);

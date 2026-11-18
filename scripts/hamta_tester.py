@@ -15,6 +15,7 @@ Endast standardbiblioteket används.
 """
 import argparse
 import datetime as dt
+import email.utils
 import json
 import pathlib
 import re
@@ -77,14 +78,19 @@ def bygg_aliasmonster(vallor):
     return [(re.compile(r"(?<![\w])" + re.escape(a).replace(r"\ ", r"[\s\-]*") + r"(?![\w])"), vid) for a, vid in par]
 
 
-def hitta_vallor(mening, monster):
+def hitta_vallor_pos(mening, monster):
+    """[(start, slut, valla_id), …] i textordning; längsta alias vinner vid överlapp."""
     text = mening.lower()
     hittade = []
     for rx, vid in monster:
         for m in rx.finditer(text):
-            hittade.append(vid)
+            hittade.append((m.start(), m.end(), vid))
             text = text[: m.start()] + " " * (m.end() - m.start()) + text[m.end() :]
-    return list(dict.fromkeys(hittade))
+    return sorted(hittade)
+
+
+def hitta_vallor(mening, monster):
+    return list(dict.fromkeys(vid for _, _, vid in hitta_vallor_pos(mening, monster)))
 
 
 def hitta_temp(mening):
@@ -124,6 +130,68 @@ def omdome(mening):
 
 def dela_meningar(text):
     return [m.strip() for m in re.split(r"(?<=[.!?\n])\s+", text) if m.strip()]
+
+
+ROLLORD = {
+    "grund": ["binder", "base", "base layer", "grund", "grundvalla", "grundklister", "bas", "underlag", "underst", "first layer", "festeunderlag"],
+    "topp": ["cover", "covered", "covered with", "top", "topcoat", "top coat", "topping", "topped", "overlay", "finish",
+             "över", "täck", "täckt", "toppa", "toppat", "ovanpå", "överst", "dekk", "over"],
+}
+
+
+def _roll(fore, efter, typ):
+    """Bestämmer lagrets roll utifrån ord nära vallanamnet och vallans typ."""
+    def har(t, lista):
+        return any(re.search(r"(?<![\w])" + re.escape(o) + r"(?![\w])", t) for o in lista)
+    narfore = fore[-30:]
+    # Ord direkt efter namnet räknas ("KX20 binder", "V40 cover") – men inte "KX30 covered with V40".
+    m = re.match(r"[\s,:–-]*(\w+)(?:\s+(\w+))?", efter)
+    ord1, ord2 = (m.group(1), m.group(2) or "") if m else ("", "")
+    efterroll = ord1 if ord2 not in ("with", "med", "by", "av", "in") else ""
+    if har(narfore, ROLLORD["topp"]) or efterroll in ("cover", "top", "topcoat", "topp", "överst") \
+            or har(efter[:20], ["on top", "som topp", "as cover", "as a cover"]):
+        return "glid-topp" if typ == "glid" else "topp"
+    if har(narfore, ROLLORD["grund"]) or efterroll in ("binder", "base", "grund", "underst") \
+            or har(efter[:20], ["as binder", "som grund", "as base"]):
+        return "glid" if typ == "glid" else "grund"
+    return {"grund": "grund", "klister": "klister", "hard": "fäste", "glid": "glid"}[typ]
+
+
+def hitta_recept(text, kalla, kalltyp, url, datum, monster, typer):
+    """Hittar kombinationer (flera vallor i samma stycke/lista) och returnerar recept.
+
+    Ett recept = ett stycke (avgränsat av tomrad) där minst två olika vallor nämns,
+    t.ex. "Binder: Swix KB20. Klister: KX30 covered with V40" eller en lista med glidlager.
+    """
+    ut = []
+    ctx_temp = ctx_sno = None  # förhållanden som nämnts tidigare i texten (t.ex. i inledningen)
+    for block in re.split(r"\n\s*\n", text):
+        if not block.strip():
+            continue
+        b_temp, b_sno = hitta_temp(block), hitta_sno(block)
+        lager, sedda = [], set()
+        for rad in block.split("\n"):
+            pos = hitta_vallor_pos(rad, monster)
+            forra = 0
+            for start, slut, vid in pos:
+                if vid in sedda:
+                    continue
+                sedda.add(vid)
+                lager.append({"valla": vid, "roll": _roll(rad[:start].lower()[forra:] if forra < start else rad[:start].lower(),
+                                                          rad[slut:].lower(), typer[vid])})
+                forra = slut
+        if len(lager) < 2:
+            ctx_temp = b_temp if b_temp is not None else ctx_temp
+            ctx_sno = b_sno or ctx_sno
+            continue
+        kort = re.sub(r"\s+", " ", block).strip()
+        ut.append({
+            "lager": lager, "temp": b_temp if b_temp is not None else ctx_temp, "sno": b_sno or ctx_sno,
+            "sentiment": omdome(block),
+            "kalla": kalla, "kalltyp": kalltyp, "url": url, "datum": datum,
+            "text": (kort[:400] + "…") if len(kort) > 400 else kort,
+        })
+    return ut
 
 
 def analysera(text, kalla, url, datum, monster):
@@ -191,7 +259,9 @@ def fran_reddit(cfg, monster):
                 datum = dt.datetime.fromtimestamp(p["created_utc"], dt.timezone.utc).date().isoformat()
                 lank = "https://www.reddit.com" + p["permalink"]
                 kalla = f"reddit r/{k['sub']}"
-                ut += analysera(p.get("title", "") + ". " + p.get("selftext", ""), kalla, lank, datum, monster)
+                text = p.get("title", "") + ".\n\n" + p.get("selftext", "")
+                ut += analysera(text, kalla, lank, datum, monster)
+                RECEPT_REDDIT.extend(hitta_recept(text, kalla, "forum", lank, datum, monster, TYPER))
                 if p.get("num_comments", 0) and kommentarer_kvar > 0:
                     kommentarer_kvar -= 1
                     try:
@@ -203,6 +273,7 @@ def fran_reddit(cfg, monster):
                     for c in plocka_kommentarer(trad[1] if len(trad) > 1 else {}):
                         cdatum = dt.datetime.fromtimestamp(c.get("created_utc", p["created_utc"]), dt.timezone.utc).date().isoformat()
                         ut += analysera(c.get("body", ""), kalla, lank, cdatum, monster)
+                        RECEPT_REDDIT.extend(hitta_recept(c.get("body", ""), kalla, "forum", lank, cdatum, monster, TYPER))
     return ut
 
 
@@ -216,38 +287,120 @@ def plocka_kommentarer(listning):
                 yield from plocka_kommentarer(svar)
 
 
-def fran_rss(cfg, monster):
+def html_till_text(html):
+    import html as htmlmod
+    html = re.sub(r"(?is)<(script|style|noscript|nav|footer|header|form)[^>]*>.*?</\1>", " ", html)
+    html = re.sub(r"(?i)<h[1-6][^>]*>", "\n\n", html)
+    html = re.sub(r"(?i)</h[1-6]>", "\n\n", html)
+    html = re.sub(r"(?i)</(p|div|section|article|table|ul|ol)>", "\n\n", html)
+    html = re.sub(r"(?i)<br\s*/?>|</(li|tr|dd|dt)>", "\n", html)
+    html = re.sub(r"(?i)</t[dh]>", " ", html)
+    text = htmlmod.unescape(re.sub(r"<[^>]+>", " ", html))
+    text = re.sub(r"[ \t\u00a0]+", " ", text)
+    text = re.sub(r" *\n *", "\n", text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def sidans_datum(html):
+    m = re.search(r'(?:article:published_time"\s+content="|<time[^>]+datetime=")(\d{4}-\d{2}-\d{2})', html)
+    return m.group(1) if m else None
+
+
+def flodesposter(xml):
+    """(titel, länk, datum, innehåll-html) från RSS eller Atom."""
+    rot = ET.fromstring(xml)
+    A = "{http://www.w3.org/2005/Atom}"
     ut = []
-    for f in cfg.get("rss", []):
+    for it in rot.findall(".//item") + rot.findall(f".//{A}entry"):
+        def txt(*taggar):
+            for t in taggar:
+                el = it.find(t)
+                if el is not None and (el.text or "").strip():
+                    return el.text
+            return ""
+        lank = txt("link")
+        if not lank:
+            el = it.find(f"{A}link")
+            lank = el.get("href", "") if el is not None else ""
+        datum = txt("pubDate", f"{A}published", f"{A}updated")
         try:
-            rot = ET.fromstring(hamta_text(f["url"]))
-        except Exception as e:  # noqa: BLE001
-            print(f"  ! rss {f.get('namn')}: {e}", file=sys.stderr)
-            continue
-        poster = rot.findall(".//item") or rot.findall(".//{http://www.w3.org/2005/Atom}entry")
-        for it in poster:
-            def txt(tag):
-                el = it.find(tag)
-                if el is None:
-                    el = it.find("{http://www.w3.org/2005/Atom}" + tag)
-                return (el.text or "") if el is not None else ""
-            lank = txt("link")
-            if not lank:
-                el = it.find("{http://www.w3.org/2005/Atom}link")
-                lank = el.get("href", "") if el is not None else f["url"]
-            datum = (txt("pubDate") or txt("updated") or "")[:16]
-            brodtext = re.sub(r"<[^>]+>", " ", txt("description") or txt("summary") or txt("content"))
-            ut += analysera(txt("title") + ". " + brodtext, f.get("namn", "RSS"), lank, datum, monster)
+            datum = email.utils.parsedate_to_datetime(datum).date().isoformat()
+        except Exception:  # noqa: BLE001
+            datum = datum[:10]
+        innehall = txt("{http://purl.org/rss/1.0/modules/content/}encoded", f"{A}content", "description", f"{A}summary")
+        ut.append((txt("title", f"{A}title"), lank, datum, innehall))
     return ut
 
 
-def skriv(omnamnanden, kallnamn):
-    # Ta bort dubbletter (samma valla + utdrag)
+def fran_sidor(cfg, monster, typer):
+    """Tillverkare, butiker och bloggar: RSS/Atom-flöden eller indexsidor med länkar till artiklar."""
+    omn, recept = [], []
+    paus = cfg.get("paus_sekunder", 1.5)
+    for s in cfg.get("sidor", []) + [dict(r, typ=r.get("typ", "forum")) for r in cfg.get("rss", [])]:
+        namn, typ = s.get("namn", s.get("url") or s.get("rss")), s.get("typ", "forum")
+        filt = re.compile(s["filter"], re.I) if s.get("filter") else None
+        dokument = []  # (url, datum, html)
+        try:
+            if s.get("rss"):
+                for titel, lank, datum, innehall in flodesposter(hamta_text(s["rss"]))[: s.get("max", 20)]:
+                    if filt and not filt.search(titel or ""):
+                        continue
+                    if len(re.sub(r"<[^>]+>", "", innehall or "")) < 300 and lank:
+                        try:
+                            innehall = hamta_text(lank)
+                            time.sleep(paus)
+                        except Exception as e:  # noqa: BLE001
+                            print(f"  ! {lank}: {e}", file=sys.stderr)
+                    dokument.append((lank or s["rss"], datum, (titel or "") + "\n\n" + (innehall or "")))
+            if s.get("url"):
+                index = hamta_text(s["url"])
+                time.sleep(paus)
+                if s.get("lankmonster"):
+                    rx = re.compile(s["lankmonster"])
+                    lankar = []
+                    for href in re.findall(r'href="([^"#]+)"', index):
+                        full = urllib.parse.urljoin(s["url"], href)
+                        if rx.search(full) and full not in lankar and full != s["url"]:
+                            lankar.append(full)
+                    for lank in lankar[: s.get("max", 15)]:
+                        try:
+                            html = hamta_text(lank)
+                            time.sleep(paus)
+                        except Exception as e:  # noqa: BLE001
+                            print(f"  ! {lank}: {e}", file=sys.stderr)
+                            continue
+                        dokument.append((lank, sidans_datum(html), html))
+                else:
+                    dokument.append((s["url"], sidans_datum(index), index))
+        except Exception as e:  # noqa: BLE001
+            print(f"  ! {namn}: {e}", file=sys.stderr)
+            continue
+        idag = dt.date.today().isoformat()
+        for url, datum, html in dokument:
+            text = html_till_text(html)
+            for o in analysera(text, namn, url, datum or idag, monster):
+                o["kalltyp"] = typ
+                omn.append(o)
+            recept += hitta_recept(text, namn, typ, url, datum or idag, monster, typer)
+        print(f"  {namn}: {len(dokument)} sidor")
+    return omn, recept
+
+
+RECEPT_REDDIT = []
+TYPER = {}
+
+
+def skriv(omnamnanden, kallnamn, recept=()):
+    # Ta bort dubbletter (samma valla + utdrag / samma lager + källa)
     unika = {(o["valla"], o["utdrag"]): o for o in omnamnanden}
+    for o in unika.values():
+        o.setdefault("kalltyp", "forum")
+    unika_r = {(tuple(l["valla"] for l in r["lager"]), r["url"], r["text"][:80]): r for r in recept}
     data = {
         "uppdaterad": dt.datetime.now(dt.timezone.utc).isoformat(timespec="minutes"),
         "kallor": kallnamn,
         "omnamnanden": sorted(unika.values(), key=lambda o: o["datum"] or "", reverse=True),
+        "recept": sorted(unika_r.values(), key=lambda r: r["datum"] or "", reverse=True),
     }
     UT_JS.write_text(
         "// Genererad av scripts/hamta_tester.py – redigera inte för hand.\nwindow.FORUM = "
@@ -263,27 +416,35 @@ def main():
     ap.add_argument("--torrkorning", action="store_true", help="Skriv inte data/forum.js")
     a = ap.parse_args()
 
-    monster = bygg_aliasmonster(las_vallor())
+    vallor = las_vallor()
+    TYPER.update({v["id"]: v["typ"] for v in vallor})
+    monster = bygg_aliasmonster(vallor)
     if a.fil:
         text = pathlib.Path(a.fil).read_text(encoding="utf-8")
-        res = analysera(text, "lokal fil", "", dt.date.today().isoformat(), monster)
+        if a.fil.endswith((".html", ".htm")):
+            text = html_till_text(text)
+        idag = dt.date.today().isoformat()
+        res = {"omnamnanden": analysera(text, "lokal fil", "", idag, monster),
+               "recept": hitta_recept(text, "lokal fil", "tillverkare", "", idag, monster, TYPER)}
         print(json.dumps(res, ensure_ascii=False, indent=1))
         return
 
     cfg = json.loads(KALLOR.read_text(encoding="utf-8"))
     print("Hämtar från Reddit …")
     alla = fran_reddit(cfg, monster)
-    if cfg.get("rss"):
-        print("Hämtar RSS-flöden …")
-        alla += fran_rss(cfg, monster)
-    kallnamn = [f"reddit r/{k['sub']}" for k in cfg.get("reddit", [])] + [f.get("namn", f["url"]) for f in cfg.get("rss", [])]
-    print(f"Hittade {len(alla)} vallaomnämnanden.")
-    if not alla:
+    print("Hämtar tillverkare, butiker och bloggar …")
+    omn, recept = fran_sidor(cfg, monster, TYPER)
+    alla += omn
+    recept += RECEPT_REDDIT
+    kallnamn = ([f"reddit r/{k['sub']}" for k in cfg.get("reddit", [])]
+                + [s.get("namn", s.get("url") or s.get("rss")) for s in cfg.get("sidor", []) + cfg.get("rss", [])])
+    print(f"Hittade {len(alla)} vallaomnämnanden och {len(recept)} kombinationer.")
+    if not alla and not recept:
         print("Inga träffar (nätverk blockerat?) – behåller befintlig data/forum.js.", file=sys.stderr)
         return
     if not a.torrkorning:
-        d = skriv(alla, kallnamn)
-        print(f"Skrev {len(d['omnamnanden'])} unika omnämnanden till {UT_JS.relative_to(ROT)}")
+        d = skriv(alla, kallnamn, recept)
+        print(f"Skrev {len(d['omnamnanden'])} omnämnanden och {len(d['recept'])} recept till {UT_JS.relative_to(ROT)}")
 
 
 if __name__ == "__main__":

@@ -92,18 +92,23 @@
       <div><h3>Glid</h3><ol id="resGlid" class="reslista"></ol></div>
       <div><h3 id="rubrikFaste">Fäste</h3><ol id="resFaste" class="reslista"></ol><div id="resExtra"></div></div>
     </div>
+    <h3>Kombinationer från tillverkare, butiker och forum</h3>
+    <p class="hjalp">Recept med flera lager som passar förhållandena. ✓ = du har vallan, ↻ = ersätt med en av dina.</p>
+    <ol id="resRecept" class="reslista receptlista"></ol>
     <h3>Tips för förhållandena</h3>
     <ul id="resTips" class="tips"></ul>
   </section>
 
   <section class="kort" id="tester">
     <h2>4. Mina tester</h2>
-    <p class="hjalp">Logga hur vallan fungerade. Dina tester väger tyngst i kommande rekommendationer.</p>
+    <p class="hjalp">Logga hur vallan – eller kombinationen – fungerade. Dina tester väger tyngst i kommande rekommendationer.</p>
     <form id="testForm" class="rad">
       <label>Datum <input name="datum" type="date" required></label>
       <label>Temp (°C) <input name="temp" type="number" step="0.5" required></label>
       <label>Snö <select name="sno" id="testSno"></select></label>
       <label class="vaxa">Valla <select name="valla" id="testValla" required></select></label>
+      <label class="vaxa">+ lager 2 (valfritt) <select name="lager2" id="testLager2"></select></label>
+      <label class="vaxa">+ lager 3 (valfritt) <select name="lager3" id="testLager3"></select></label>
       <label>Betyg
         <select name="betyg">
           <option value="5">5 – perfekt</option><option value="4">4 – bra</option>

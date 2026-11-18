@@ -4,7 +4,14 @@
     {"sub": "langrenn", "sok": ["smøring", "klister", "festevoks"]},
     {"sub": "Skidor", "sok": ["valla", "klister", "fästvalla"]}
   ],
-  "rss": [],
+  "sidor": [
+    {"namn": "Swix vallatips inför lopp", "typ": "tillverkare",
+     "url": "https://swixsport.com/us/article/wax-tips-for-races", "lankmonster": "/article/wax-tips-for-races/[a-z0-9-]+/?$", "max": 15},
+    {"namn": "Gear West vallarekommendationer", "typ": "butik",
+     "rss": "https://www.gearwest.com/blogs/gear-west-blog.atom", "filter": "wax", "max": 30},
+    {"namn": "Nordic Ski Racer wax room", "typ": "forum",
+     "url": "https://www.nordicskiracer.com/wax-room.asp"}
+  ],
   "max_tradar_per_sokning": 25,
   "max_kommentartradar": 40,
   "paus_sekunder": 1.5

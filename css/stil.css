@@ -87,3 +87,14 @@ legend { font-size: .85rem; color: var(--dim); }
 a { color: var(--accent); }
 code { background: var(--chip); padding: 1px 5px; border-radius: 4px; font-size: .88em; }
 .exporttext { width: 100%; font: .8rem/1.4 ui-monospace, monospace; background: var(--bg); color: var(--text); border: 1px solid var(--linje); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+.receptlista .resrubrik::before { content: none; }
+.kalltyp { font-size: .72rem; padding: 1px 8px; border-radius: 999px; background: var(--chip); border: 1px solid var(--linje); white-space: nowrap; }
+.kalltyp.tillverkare { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.kalltyp.butik { border-color: var(--accent); color: var(--accent); }
+.kalltyp.eget { background: var(--bra); color: var(--accent-text); border-color: var(--bra); }
+.villkor { margin: 4px 0; font-size: .85rem; color: var(--dim); }
+.lager { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; font-size: .92rem; }
+.lager li { display: grid; grid-template-columns: 1.3em 1fr; align-items: start; }
+.lager li > div { min-width: 0; }
+.lager .roll { display: block; color: var(--dim); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+.har { color: var(--bra); font-weight: 700; } .ersatt { color: var(--accent); font-weight: 700; } .saknas { color: var(--dalig); font-weight: 700; }

@@ -31,13 +31,17 @@ Per valla (`js/motor.js`):
 - **Snötyp (25 %)** – om vallan är gjord för snötypen. Isig/grovkornig snö, och blött runt nollan, ger klister.
 - **Evidens (15 % + justering)** – forumomnämnanden nära samma temperatur (positiva/negativa), allmän konsensus och dina egna tester.
 
-## Tester och forum från nätet
+## Tillverkare, butiker, forum – och kombinationer
 
-`scripts/hamta_tester.py` hämtar inlägg och kommentarer från forum och letar upp:
+`scripts/hamta_tester.py` hämtar vallarekommendationer och tester från **tillverkare** (t.ex. Swix vallatips inför lopp), **butiker/vallateam** (t.ex. Gear Wests helgrekommendationer) och **forum**, och letar upp:
 
 - vilka vallor som nämns (via namn och alias i `data/vallor.js`, t.ex. `V40`, `KX45`, `Rex blå klister`),
 - temperatur (`-6C`, `minus 8 grader`, `23F` …) och snötyp,
 - omdöme (”bra fäste”, ”slirade”, ”iced”, ”great kick” …) på svenska, norska och engelska.
+
+- **kombinationer i flera lager** – när flera vallor nämns i samma stycke eller lista blir det ett recept, och varje lager får en roll: grund/binder, klister, fäste, topplager (”covered with”, ”täckt med”, ”cover”) eller glid/glidtopp. Temperatur och snö ärvs från inledningen om de inte står i själva stycket.
+
+I appen visas recepten under *Kombinationer*. För varje lager syns om du har vallan (✓), vilken av dina vallor som kan ersätta den (↻) eller att den saknas (✗). Tillverkare väger tyngre än butiker, som väger tyngre än forum. Du kan också logga egna tester med upp till tre lager.
 
 Resultatet skrivs till `data/forum.js` och visas i appen under ”Vad tester och forum säger”, med länk till källan.
 
@@ -46,11 +50,17 @@ python3 scripts/hamta_tester.py                         # hämta från källorna
 python3 scripts/hamta_tester.py --fil tests/exempel_forum.txt   # testa analysen på en textfil
 ```
 
-Källor ställs in i `scripts/kallor.json`: Reddit (r/xcountryskiing, r/langrenn, r/Skidor) är förinställt, och du kan lägga till valfria **RSS-flöden** från forum eller vallabloggar:
+Källor ställs in i `scripts/kallor.json`. Reddit (r/xcountryskiing, r/langrenn, r/Skidor) är förinställt, liksom Swix lopptips, Gear West och Nordic Ski Racer under `sidor`. En sida kan vara ett flöde eller en indexsida vars artiklar följs:
 
 ```json
-"rss": [{"namn": "Mitt forum", "url": "https://exempel.se/forum/valla.rss"}]
+"sidor": [
+  {"namn": "Mitt forum", "typ": "forum", "rss": "https://exempel.se/forum/valla.rss", "filter": "valla"},
+  {"namn": "Tillverkarens vallatips", "typ": "tillverkare",
+   "url": "https://exempel.com/wax-tips", "lankmonster": "/wax-tips/[a-z0-9-]+$", "max": 15}
+]
 ```
+
+`typ` är `tillverkare`, `butik` eller `forum` och styr vikten. Adresserna under `sidor` kunde inte provas från utvecklingsmiljön – kör skriptet och se utskriften; byter en sajt struktur skrivs ett fel ut och övriga källor körs ändå. Läsaren är generell (ren text ur HTML), så de flesta sidor med vallatips fungerar utan specialkod.
 
 GitHub Actions-flödet `.github/workflows/hamta-tester.yml` kör skriptet varje natt och committar ny data. Det kan också startas manuellt under *Actions*.
 

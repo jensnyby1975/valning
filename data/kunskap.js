@@ -14,6 +14,15 @@ window.KUNSKAP = {
     {"valla":"rode-blu-extra","tMin":-8,"tMax":-2,"sno":["ny","finkornig"],"text":"Rode Blu Extra nämns ofta som alternativ till V40 med lite mer fäste."},
     {"valla":"rex-bla","tMin":-10,"tMax":-3,"sno":["ny","finkornig"],"text":"Rex Blå är en populär, lättvallad fästvalla i normal vinterkyla."}
   ],
+  // Välkända kombinationer (inte specifika tester).
+  recept: [
+    {"lager":[{"valla":"swix-kb20","roll":"grund"},{"valla":"swix-kx30","roll":"klister"},{"valla":"swix-v40","roll":"topp"}],"tMin":-10,"tMax":-2,"sno":["isig","grovkornig"],"text":"Isiga, kalla spår: grundklister, blå klister och ett tunt lager hårdvalla överst mot smuts och klabb."},
+    {"lager":[{"valla":"swix-vg35","roll":"grund"},{"valla":"swix-v40","roll":"fäste"}],"tMin":-8,"tMax":-2,"sno":["konst","finkornig"],"text":"Konstsnö sliter: stryk in grundvalla och lägg 4–6 tunna lager hårdvalla."},
+    {"lager":[{"valla":"swix-kx45","roll":"klister"},{"valla":"swix-v45","roll":"topp"}],"tMin":-3,"tMax":1,"sno":["grovkornig","isig"],"text":"Nollföre på omvandlad snö: violett klister täckt med ett tunt lager violett hårdvalla."},
+    {"lager":[{"valla":"swix-kx65","roll":"klister"},{"valla":"swix-kx75","roll":"klister"}],"tMin":2,"tMax":10,"sno":["blot"],"text":"Mycket blött: röd klister, blanda in Extra Wet om det är vatten i spåret."},
+    {"lager":[{"valla":"rex-grundvalla","roll":"grund"},{"valla":"rex-bla","roll":"fäste"}],"tMin":-8,"tMax":-2,"sno":["ny","finkornig"],"text":"Rex grundvalla strukts in, därefter 5–6 tunna lager Rex Blå."},
+    {"lager":[{"valla":"swix-ps7","roll":"glid"},{"valla":"swix-ts7","roll":"glid-topp"}],"tMin":-8,"tMax":-2,"sno":null,"text":"Glid i två lager: träningsvalla som bas, tävlingsvalla överst."}
+  ],
   tips: [
     {"villkor":{"tMin":-1.5,"tMax":1.5,"sno":["ny","blot"]},"text":"Nollföre med nysnö: stor risk för isbildning/klabb. Testa tunn klister täckt med hårdvalla, korta fästzonen, eller använd skinskidor/skrapa (\"zero\")."},
     {"villkor":{"sno":["isig"]},"text":"Isigt: lägg grundklister eller blå klister, låt kallna och lägg ev. ett tunt lager hårdvalla överst för att minska smuts och klabb."},
