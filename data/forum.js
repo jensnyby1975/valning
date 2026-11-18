@@ -1,6 +1,6 @@
 // Genererad av scripts/hamta_tester.py – redigera inte för hand.
 window.FORUM = {
- "uppdaterad": "2026-11-18T16:22+00:00",
+ "uppdaterad": "2026-11-18T16:53+00:00",
  "kallor": [
   "reddit r/xcountryskiing",
   "reddit r/langrenn",
@@ -459,7 +459,19 @@ window.FORUM = {
      "valla": "swix-vp65",
      "alt": [],
      "roll": "fäste"
-    },
+    }
+   ],
+   "temp": 2.7,
+   "sno": null,
+   "sentiment": -1,
+   "kalla": "Swix vallatips inför lopp",
+   "kalltyp": "tillverkare",
+   "url": "https://swixsport.com/eu/article/wax-tips-for-races/skarverennet",
+   "datum": "2026-11-18",
+   "text": "Temperatures along the course, Saturday 17 April 2026: Haugastøl at 07:00 +2°C Haugastøl at 10:00 +2°C Ustaoset at 12:00 +4°C There has been significant snowfall in the mountains in recent days. Conditions will vary from the start and up into the mountains. As it looks now, it will rain at the start and snow higher up. Waxing conditions will be challenging. You should expect slightly poor grip from the start and then improved grip higher up. If you wax too soft at the start, there is a risk of i…"
+  },
+  {
+   "lager": [
     {
      "valla": "swix-hs6",
      "alt": [],
@@ -576,26 +588,26 @@ window.FORUM = {
   {
    "lager": [
     {
-     "valla": "swix-marathon",
-     "alt": [],
-     "roll": "glid"
-    },
-    {
      "valla": "swix-kb20",
      "alt": [
-      "rex-grundklister"
+      "rode-grundklister"
      ],
      "roll": "grund"
+    },
+    {
+     "valla": "rode-viola-special",
+     "alt": [],
+     "roll": "topp"
     }
    ],
    "temp": null,
-   "sno": "ny",
+   "sno": null,
    "sentiment": 0,
    "kalla": "Gear West vallarekommendationer",
    "kalltyp": "butik",
-   "url": "https://www.gearwest.com/blogs/gear-west-blog/2025-26-wax-recommendations",
-   "datum": "2025-12-11",
-   "text": "Base: Swix Marathon powder white or Rode Endurance Binder: Swix Base klister spray or Rex Base klister Base: Swix Marathon White Powder or Star Durable powder, if you don't have an iron use Star Durable liquid Binder: Swix Base klister spray or Toko Base klister"
+   "url": "https://www.gearwest.com/blogs/gear-west-blog/city-of-lakes-loppet-wax-recommendation",
+   "datum": "2025-01-30",
+   "text": "Base : Rode Endurance or Swix Marathon powder Top : Swix TSP7, Swix TS7 liquid or Rode RL Med Kick Base : Swix Base Klister Spray or Rode Base Klister Spray, followed by a thin layer of Rode Violet Special Base : Rode Endurance or Swix Marathon powder Top : Swix TSP7, Swix TS7 liquid or Rode RL Med"
   },
   {
    "lager": [
@@ -610,18 +622,6 @@ window.FORUM = {
       "rode-glid-medel"
      ],
      "roll": "glid-topp"
-    },
-    {
-     "valla": "swix-kb20",
-     "alt": [
-      "rode-grundklister"
-     ],
-     "roll": "grund"
-    },
-    {
-     "valla": "rode-viola-special",
-     "alt": [],
-     "roll": "topp"
     }
    ],
    "temp": null,
