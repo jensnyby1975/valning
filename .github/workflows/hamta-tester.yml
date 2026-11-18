@@ -2,7 +2,7 @@ name: Hämta vallatester från forum
 
 on:
   schedule:
-    - cron: "17 4 * * 5"   # fredagar 04:17 UTC (inför helgens lopp) – schemat startar 2027-01-01
+    - cron: "17 4 * 1-3 5"   # fredagar 04:17 UTC i januari–mars (vallasäsongen), varje år
   workflow_dispatch:
   push:
     paths:
@@ -15,26 +15,7 @@ permissions:
   issues: write
 
 jobs:
-  # Schemalagda körningar börjar först i januari 2027. Manuell start och push körs alltid.
-  vanta:
-    runs-on: ubuntu-latest
-    outputs:
-      kor: ${{ steps.datum.outputs.kor }}
-    steps:
-      - id: datum
-        env:
-          HANDELSE: ${{ github.event_name }}
-        run: |
-          if [ "$HANDELSE" = "schedule" ] && [ "$(date -u +%Y%m%d)" -lt 20270101 ]; then
-            echo "Schemat startar 2027-01-01 – hoppar över."
-            echo "kor=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "kor=true" >> "$GITHUB_OUTPUT"
-          fi
-
   hamta:
-    needs: vanta
-    if: needs.vanta.outputs.kor == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
