@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vallaguiden</title>
+  <meta name="description" content="Rekommendationer för längdskidvalla utifrån väder, snö, dina vallor och tester/forum.">
+  <link rel="stylesheet" href="css/stil.css">
+</head>
+<body>
+<header>
+  <h1>Vallaguiden <span class="sub">längdskidor</span></h1>
+  <p class="ingress">Ange förhållanden och vilka vallor du har – få glid- och fästrekommendationer viktade mot tester, forum och dina egna erfarenheter.</p>
+</header>
+
+<main>
+  <section class="kort" id="forhallanden">
+    <h2>1. Förhållanden</h2>
+    <div class="rad">
+      <label class="vaxa">Ort
+        <input id="ort" type="text" placeholder="t.ex. Mora, Åre, Sjusjøen" autocomplete="off">
+      </label>
+      <label>Tidpunkt
+        <input id="tid" type="datetime-local">
+      </label>
+      <button id="hamtaVader" type="button">Hämta väder</button>
+      <button id="minPlats" type="button" class="sekundar" title="Använd din position">📍</button>
+    </div>
+    <div id="ortlista" class="ortlista" hidden></div>
+    <p id="vaderstatus" class="status"></p>
+
+    <div class="rad">
+      <label>Lufttemp (°C)
+        <input id="temp" type="number" step="0.5" value="-5">
+      </label>
+      <label>Luftfuktighet (%)
+        <input id="fukt" type="number" min="0" max="100" step="1" value="80">
+      </label>
+      <label class="vaxa">Snötyp
+        <select id="sno"></select>
+      </label>
+    </div>
+    <p id="snogissning" class="status"></p>
+  </section>
+
+  <section class="kort" id="vallor">
+    <h2>2. Dina vallor</h2>
+    <div class="flikar" role="tablist">
+      <button type="button" role="tab" data-lage="marken" class="flik">Mina märken</button>
+      <button type="button" role="tab" data-lage="vallor" class="flik">Mina vallor</button>
+    </div>
+    <div id="lageMarken">
+      <p class="hjalp">Välj märken du använder – vi föreslår bland deras sortiment.</p>
+      <div id="markeChips" class="chips"></div>
+    </div>
+    <div id="lageVallor" hidden>
+      <p class="hjalp">Bocka i vallorna du har i lådan. Sparas i din webbläsare.</p>
+      <input id="vallaSok" type="search" placeholder="Sök valla…">
+      <div id="vallaLista" class="vallalista"></div>
+      <details class="egen">
+        <summary>Lägg till egen valla</summary>
+        <form id="egenForm" class="rad">
+          <label>Märke <input name="marke" required></label>
+          <label>Namn <input name="namn" required></label>
+          <label>Typ
+            <select name="typ">
+              <option value="glid">Glid</option>
+              <option value="hard">Fäste – hårdvalla</option>
+              <option value="klister">Fäste – klister</option>
+              <option value="grund">Grundvalla / grundklister</option>
+            </select>
+          </label>
+          <label>Varmast (°C) <input name="max" type="number" step="0.5" required></label>
+          <label>Kallast (°C) <input name="min" type="number" step="0.5" required></label>
+          <fieldset class="vaxa"><legend>Snötyper</legend><div id="egenSno" class="chips"></div></fieldset>
+          <button type="submit">Lägg till</button>
+        </form>
+      </details>
+    </div>
+  </section>
+
+  <section class="kort" id="resultat">
+    <h2>3. Rekommendation</h2>
+    <div id="sammanfattning" class="sammanfattning"></div>
+    <div class="tva">
+      <div><h3>Glid</h3><ol id="resGlid" class="reslista"></ol></div>
+      <div><h3 id="rubrikFaste">Fäste</h3><ol id="resFaste" class="reslista"></ol><div id="resExtra"></div></div>
+    </div>
+    <h3>Tips för förhållandena</h3>
+    <ul id="resTips" class="tips"></ul>
+  </section>
+
+  <section class="kort" id="tester">
+    <h2>4. Mina tester</h2>
+    <p class="hjalp">Logga hur vallan fungerade. Dina tester väger tyngst i kommande rekommendationer.</p>
+    <form id="testForm" class="rad">
+      <label>Datum <input name="datum" type="date" required></label>
+      <label>Temp (°C) <input name="temp" type="number" step="0.5" required></label>
+      <label>Snö <select name="sno" id="testSno"></select></label>
+      <label class="vaxa">Valla <select name="valla" id="testValla" required></select></label>
+      <label>Betyg
+        <select name="betyg">
+          <option value="5">5 – perfekt</option><option value="4">4 – bra</option>
+          <option value="3" selected>3 – ok</option><option value="2">2 – dåligt</option>
+          <option value="1">1 – fungerade inte</option>
+        </select>
+      </label>
+      <label class="vaxa">Kommentar <input name="kommentar" placeholder="t.ex. slirade i backarna"></label>
+      <button type="submit">Spara test</button>
+    </form>
+    <ul id="testLista" class="testlista"></ul>
+    <div class="rad">
+      <button id="exportera" type="button" class="sekundar">Exportera tester (JSON)</button>
+      <label class="knapp sekundar">Importera <input id="importera" type="file" accept="application/json" hidden></label>
+    </div>
+  </section>
+
+  <section class="kort" id="kallor">
+    <h2>Om datan</h2>
+    <p id="forumInfo" class="hjalp"></p>
+    <p class="hjalp">Temperaturområdena är riktvärden sammanställda per märke och färg – kontrollera alltid förpackningen.
+      Forumdata hämtas av <code>scripts/hamta_tester.py</code> (Reddit och valfria RSS-flöden) och uppdateras automatiskt via GitHub Actions.
+      Väder från <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>.</p>
+  </section>
+</main>
+
+<script src="data/vallor.js"></script>
+<script src="data/kunskap.js"></script>
+<script src="data/forum.js"></script>
+<script src="js/motor.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

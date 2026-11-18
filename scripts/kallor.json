@@ -1,0 +1,11 @@
+{
+  "reddit": [
+    {"sub": "xcountryskiing", "sok": ["wax", "klister", "kick wax", "grip wax"]},
+    {"sub": "langrenn", "sok": ["smøring", "klister", "festevoks"]},
+    {"sub": "Skidor", "sok": ["valla", "klister", "fästvalla"]}
+  ],
+  "rss": [],
+  "max_tradar_per_sokning": 25,
+  "max_kommentartradar": 40,
+  "paus_sekunder": 1.5
+}
