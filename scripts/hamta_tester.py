@@ -250,15 +250,18 @@ def hitta_recept(text, kalla, kalltyp, url, datum, monster, typer):
                         lika["alt"].append(a)
             elif x["valla"] not in {y["valla"] for y in ihop}:
                 ihop.append(dict(x, alt=list(x["alt"])))
-        lager = ihop
-        if len({l["valla"] for l in lager}) < 2:
-            return
         kort = re.sub(r"\s+", " ", kalltext).strip()
-        ut.append({
-            "lager": lager, "temp": t, "sno": sno, "sentiment": omdome(kalltext),
-            "kalla": kalla, "kalltyp": kalltyp, "url": url, "datum": datum,
-            "text": (kort[:500] + "…") if len(kort) > 500 else kort,
-        })
+        # Glid och fäste är separata recept (en vallaguide beskriver ofta båda i samma avsnitt).
+        glid = [x for x in ihop if x["roll"] in ("glid", "glid-topp")]
+        faste = [x for x in ihop if x["roll"] not in ("glid", "glid-topp")]
+        for del_ in (faste, glid):
+            if len({l["valla"] for l in del_}) < 2:
+                continue
+            ut.append({
+                "lager": del_, "temp": t, "sno": sno, "sentiment": omdome(kalltext),
+                "kalla": kalla, "kalltyp": kalltyp, "url": url, "datum": datum,
+                "text": (kort[:500] + "…") if len(kort) > 500 else kort,
+            })
 
     avsnitt = re.split(r"\n(?=## )", "\n" + text)
     for av in avsnitt:
@@ -525,6 +528,46 @@ TYPER = {}
 DUMPA = None  # katalog för utläst text (felsökning), sätts med --dumpa
 
 
+def las_befintlig():
+    try:
+        txt = UT_JS.read_text(encoding="utf-8")
+        return json.loads(txt[txt.index("{") : txt.rindex("}") + 1])
+    except (OSError, ValueError):
+        return {"omnamnanden": [], "recept": []}
+
+
+def receptnyckel(r):
+    return "+".join(l["valla"] for l in r["lager"]) + "|" + (r.get("url") or "")
+
+
+def sammanfatta_nytt(gammal, ny, namn):
+    """Markdown med recept och tillverkar-/butikstips som inte fanns i förra körningen."""
+    gamla_r = {receptnyckel(r) for r in gammal.get("recept", [])}
+    gamla_o = {(o["valla"], o["utdrag"]) for o in gammal.get("omnamnanden", [])}
+    nya_r = [r for r in ny["recept"] if receptnyckel(r) not in gamla_r]
+    nya_o = [o for o in ny["omnamnanden"] if (o["valla"], o["utdrag"]) not in gamla_o
+             and o.get("kalltyp") in ("tillverkare", "butik")]
+    if not nya_r and not nya_o:
+        return ""
+    def vnamn(vid):
+        return namn.get(vid, vid)
+    rader = [f"Hämtningen {ny['uppdaterad'][:10]} hittade **{len(nya_r)} nya kombinationer** och "
+             f"**{len(nya_o)} nya tips** från tillverkare och butiker.", ""]
+    if nya_r:
+        rader += ["## Nya kombinationer", ""]
+        for r in nya_r[:30]:
+            villkor = ", ".join(x for x in [f"{r['temp']:+g}°" if r.get("temp") is not None else "", r.get("sno") or ""] if x)
+            lager = " → ".join(f"{l['roll']}: {vnamn(l['valla'])}" + (" (eller " + ", ".join(vnamn(a) for a in l.get("alt", [])) + ")" if l.get("alt") else "")
+                               for l in r["lager"])
+            rader.append(f"- **{r['kalla']}**{' – ' + villkor if villkor else ''}: {lager}" + (f" ([källa]({r['url']}))" if r.get("url") else ""))
+        rader.append("")
+    if nya_o:
+        rader += ["## Nya tips", ""]
+        for o in nya_o[:30]:
+            rader.append(f"- **{vnamn(o['valla'])}** – {o['kalla']}: “{o['utdrag']}”" + (f" ([källa]({o['url']}))" if o.get("url") else ""))
+    return "\n".join(rader) + "\n"
+
+
 def skriv(omnamnanden, kallnamn, recept=()):
     # Ta bort dubbletter (samma valla + utdrag / samma lager + källa)
     unika = {(o["valla"], o["utdrag"]): o for o in omnamnanden}
@@ -550,6 +593,7 @@ def main():
     ap.add_argument("--fil", help="Analysera en lokal textfil i stället för att hämta från nätet")
     ap.add_argument("--torrkorning", action="store_true", help="Skriv inte data/forum.js")
     ap.add_argument("--dumpa", help="Spara utläst text från varje sida i denna katalog (felsökning)")
+    ap.add_argument("--nytt", help="Skriv en sammanfattning (markdown) av nya tips till denna fil")
     a = ap.parse_args()
     global DUMPA
     if a.dumpa:
@@ -582,8 +626,12 @@ def main():
     if not alla and not recept:
         print("Inga träffar (nätverk blockerat?) – behåller befintlig data/forum.js.", file=sys.stderr)
         return
+    gammal = las_befintlig()
     if not a.torrkorning:
         d = skriv(alla, kallnamn, recept)
+        if a.nytt:
+            namn = {v["id"]: f"{v['marke']} {v['namn']}" for v in vallor}
+            pathlib.Path(a.nytt).write_text(sammanfatta_nytt(gammal, d, namn), encoding="utf-8")
         print(f"Skrev {len(d['omnamnanden'])} omnämnanden och {len(d['recept'])} recept till {UT_JS.relative_to(ROT)}")
 
 
