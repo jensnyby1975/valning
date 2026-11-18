@@ -27,11 +27,12 @@ def main():
         "<script>\n" + las(f) + "\n</script>"
         for f in ["data/vallor.js", "data/kunskap.js", "data/forum.js", "js/motor.js"]
     )
+    gemensamma = (ROT / "data" / "tester.json").read_text(encoding="utf-8").strip().replace("</", "<\\/")
     sida = (
         "<title>Vallaguiden</title>\n"
         '<meta name="claude:viewport-fit-sides" content="cover">\n'
         f"<style>\n{css}</style>\n{kropp}"
-        f"<script>window.UTAN_VADER = true;</script>\n{skript}\n<script>\n{las('js/app.js')}\n</script>\n"
+        f"<script>window.UTAN_VADER = true;\nwindow.GEMENSAMMA_TESTER = {gemensamma};</script>\n{skript}\n<script>\n{las('js/app.js')}\n</script>\n"
     )
     ut.write_text(sida, encoding="utf-8")
     print(f"Skrev {ut} ({len(sida) // 1024} kB)")

@@ -1,0 +1,64 @@
+name: Spara gemensamma tester
+
+# När någon delar tester från appen skapas ett ärende med ett json-block.
+# Flödet validerar testerna, lägger in dem i data/tester.json och stänger ärendet.
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: spara-tester
+  cancel-in-progress: false
+
+jobs:
+  spara:
+    if: contains(github.event.issue.body, '<!-- vallatest -->')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validera och spara
+        id: spara
+        env:
+          # Ärendets text är otrustad: den går bara in som miljövariabel och läses av Python.
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set +e
+          python3 scripts/spara_tester.py > rapport.txt
+          echo "kod=$?" >> "$GITHUB_OUTPUT"
+          cat rapport.txt
+      - name: Committa
+        if: steps.spara.outputs.antal != '' && steps.spara.outputs.antal != '0'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config user.name "vallaguiden-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/tester.json
+          git commit -m "Gemensamma tester från ärende #${ISSUE_NUMBER}"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
+      - name: Svara och stäng ärendet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            cat rapport.txt
+            echo
+            if [ "${{ steps.spara.outputs.antal }}" != "" ] && [ "${{ steps.spara.outputs.antal }}" != "0" ]; then
+              echo "Tack! Testerna syns i appen för alla om några minuter."
+            fi
+          } > svar.md
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file svar.md
+          gh issue close "$ISSUE_NUMBER" --repo "$REPO"

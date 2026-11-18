@@ -23,6 +23,18 @@ Appen kan installeras på hemskärmen och fungerar offline (väder kräver nät)
 3. **Rekommendation** – topp 3 glid och topp 3 fäste (hårdvalla eller klister beroende på snön), grundvalla, topplager över klister, samt tips för förhållandena. Finns det en klart bättre valla som du inte har visas den också.
 4. **Mina tester** – logga hur vallan fungerade (1–5). Dina tester väger tyngst nästa gång det är liknande förhållanden. Kan exporteras/importeras som JSON.
 
+## Gemensamma tester
+
+Alla delade tester sparas i **`data/tester.json`** i repot – en fil som är gemensam för alla som använder appen. Appen läser in den vid start, visar testerna under *Gemensamma tester* och låter dem påverka rekommendationerna (egna tester väger mest, sedan gemensamma, tillverkare, butiker och forum).
+
+Så delar man:
+
+1. Logga ett test i appen och tryck **Dela** (eller *Dela alla odelade*). Fyll gärna i namn/smeknamn först.
+2. GitHub öppnas med ett färdigifyllt ärende – tryck **Submit new issue** (gratis GitHub-konto krävs).
+3. Flödet `.github/workflows/spara-tester.yml` kontrollerar testerna (`scripts/spara_tester.py`), lägger in dem i `data/tester.json`, svarar och stänger ärendet. Appen publiceras om automatiskt.
+
+Appen innehåller ingen nyckel som kan skriva till repot; allt går via ärenden. Ärendets innehåll behandlas som otrustad indata: bara kända vallor, rimliga temperaturer, betyg 1–5 och korta, rensade kommentarer sparas. Ett test som redan finns sparas inte igen. Vill du ta bort ett test – ta bort det ur `data/tester.json`.
+
 ## Hur rekommendationen räknas
 
 Per valla (`js/motor.js`):

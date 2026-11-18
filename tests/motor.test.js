@@ -110,3 +110,13 @@ test("recept: alternativ räknas som att man har lagret", () => {
   assert.strictEqual(grund.har, true);
   assert.strictEqual(grund.viaAlt.id, "rex-grundklister");
 });
+
+test("gemensamma tester påverkar, men mindre än egna", () => {
+  const f = { temp: -5, sno: "finkornig" };
+  const bas = M.rekommendera(f, VALLOR, bara("Swix"), {}).faste[0];
+  const t = { valla: bas.valla.id, temp: -5, sno: "finkornig", betyg: 1, datum: "2026-01-01" };
+  const egen = M.rekommendera(f, VALLOR, bara("Swix"), { egnaTester: [t] }, 30).faste.find((x) => x.valla.id === bas.valla.id);
+  const gem = M.rekommendera(f, VALLOR, bara("Swix"), { egnaTester: [{ ...t, gemensam: true, signatur: "Kalle" }] }, 30).faste.find((x) => x.valla.id === bas.valla.id);
+  assert.ok(gem.poang < bas.poang && egen.poang < gem.poang);
+  assert.ok(gem.evidens.some((p) => p.kalla.includes("Kalle")));
+});

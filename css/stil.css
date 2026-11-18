@@ -98,3 +98,7 @@ code { background: var(--chip); padding: 1px 5px; border-radius: 4px; font-size:
 .lager li > div { min-width: 0; }
 .lager .roll { display: block; color: var(--dim); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
 .har { color: var(--bra); font-weight: 700; } .ersatt { color: var(--accent); font-weight: 700; } .saknas { color: var(--dalig); font-weight: 700; }
+.testlista .knappar { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
+.testlista .knappar button { margin-left: 0; }
+.delad { color: var(--bra); font-size: .82rem; white-space: nowrap; }
+.kalltyp.gemensam { background: var(--hard); color: #fff; border-color: var(--hard); }

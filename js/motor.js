@@ -46,8 +46,8 @@
 
   function gauss(d, s) { return Math.exp(-(d * d) / (2 * s * s)); }
 
-  var KALLVIKT = { tillverkare: 1.0, butik: 0.9, forum: 0.6, erfarenhet: 0.8, eget: 1.5 };
-  var KALLNAMN = { tillverkare: "Tillverkare", butik: "Butik/vallateam", forum: "Forum", erfarenhet: "Allmän erfarenhet", eget: "Ditt test" };
+  var KALLVIKT = { tillverkare: 1.0, butik: 0.9, forum: 0.6, erfarenhet: 0.8, eget: 1.5, gemensam: 1.2 };
+  var KALLNAMN = { tillverkare: "Tillverkare", butik: "Butik/vallateam", forum: "Forum", erfarenhet: "Allmän erfarenhet", eget: "Ditt test", gemensam: "Gemensamt test" };
   var ROLLNAMN = { grund: "Grund", klister: "Klister", "fäste": "Fäste", topp: "Topplager", glid: "Glid", "glid-topp": "Glid, topplager" };
 
   // Hittar en ersättare bland användarens vallor: samma typ, vars område täcker originalets mitt bäst.
@@ -73,8 +73,9 @@
     (kallor.egnaTester || []).forEach(function (e) {
       if (!e.lager || !e.lager.length || e.betyg < 4) return;
       alla.push({ lager: [{ valla: e.valla, roll: "" }].concat(e.lager.map(function (id) { return { valla: id, roll: "" }; })),
-        temp: e.temp, sno: e.sno, kalla: "Mina tester", kalltyp: "eget", datum: e.datum,
-        text: "Ditt test: betyg " + e.betyg + "/5" + (e.kommentar ? " – " + e.kommentar : "") });
+        temp: e.temp, sno: e.sno, kalla: e.gemensam ? "Gemensamma tester – " + (e.signatur || e.github || "okänd") : "Mina tester",
+        kalltyp: e.gemensam ? "gemensam" : "eget", datum: e.datum,
+        text: (e.gemensam ? "Test" : "Ditt test") + ": betyg " + e.betyg + "/5" + (e.kommentar ? " – " + e.kommentar : "") });
     });
     var ut = [];
     alla.forEach(function (r) {
@@ -110,7 +111,7 @@
         kalltypNamn: KALLNAMN[r.kalltyp] || "Forum" });
     });
     // Slå ihop dubbletter (samma lager): behåll den mest auktoritativa källan och bästa poängen.
-    var RANG = { eget: 5, tillverkare: 4, butik: 3, erfarenhet: 2, forum: 1 };
+    var RANG = { eget: 6, gemensam: 5, tillverkare: 4, butik: 3, erfarenhet: 2, forum: 1 };
     var grupper = {};
     ut.forEach(function (x) {
       var k = x.rader.map(function (r) { return r.valla.id; }).join("+");
@@ -156,8 +157,10 @@
       var w = gauss(e.temp - f.temp, 2.5) * (e.sno === f.sno ? 1 : 0.6);
       if (w < 0.1) return;
       var s = (e.betyg - 3) / 2; // betyg 1..5 -> -1..1
-      poang += 2.0 * w * s;
-      poster.push({ typ: "eget", vikt: w * s, text: "Ditt test " + e.datum + ": betyg " + e.betyg + "/5" + (e.kommentar ? " – " + e.kommentar : ""), kalla: "Mina tester", temp: e.temp });
+      poang += (e.gemensam ? 1.2 : 2.0) * w * s;
+      poster.push({ typ: e.gemensam ? "gemensam" : "eget", vikt: w * s,
+        text: (e.gemensam ? "Test " : "Ditt test ") + e.datum + ": betyg " + e.betyg + "/5" + (e.kommentar ? " – " + e.kommentar : ""),
+        kalla: e.gemensam ? "Gemensamma tester – " + (e.signatur || e.github || "okänd") : "Mina tester", temp: e.temp });
     });
     poster.sort(function (a, b) { return Math.abs(b.vikt) - Math.abs(a.vikt); });
     return { poang: poang, poster: poster };

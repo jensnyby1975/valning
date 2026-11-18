@@ -10,7 +10,16 @@
   function spara() { try { localStorage.setItem(NYCKEL, JSON.stringify(state)); } catch (e) { /* privat läge */ } }
 
   function allaVallor() { return window.VALLOR.concat(state.egna || []); }
-  function hittaValla(id) { return allaVallor().filter(function (v) { return v.id === id; })[0]; }
+  // Andras egna vallor från gemensamma tester – bara för att kunna visa namn och räkna recept.
+  var gemensamma = { tester: [], egna: [], uppdaterad: null };
+  function medDeladeVallor() {
+    var finns = {}; allaVallor().forEach(function (v) { finns[v.id] = 1; });
+    return allaVallor().concat(gemensamma.egna.filter(function (v) { return !finns[v.id]; }));
+  }
+  function hittaValla(id) { return medDeladeVallor().filter(function (v) { return v.id === id; })[0]; }
+  function nyttId() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
+  state.delade = state.delade || {};
+  (state.tester || []).forEach(function (t) { if (!t.id) t.id = nyttId(); });
   function marken() {
     var s = {}; allaVallor().forEach(function (v) { s[v.marke] = 1; });
     return Object.keys(s).sort();
@@ -152,7 +161,10 @@
 
   function rakna() {
     var f = forhallanden();
-    var kallor = { forum: window.FORUM, kunskap: window.KUNSKAP, egnaTester: state.tester };
+    var mina = {}; state.tester.forEach(function (t) { mina[t.id] = 1; });
+    var delade = gemensamma.tester.filter(function (t) { return !mina[t.id]; })
+      .map(function (t) { return Object.assign({}, t, { gemensam: true }); });
+    var kallor = { forum: window.FORUM, kunskap: window.KUNSKAP, egnaTester: state.tester.concat(delade) };
     var r = M.rekommendera(f, allaVallor(), tillgangligt, kallor, 3);
     var fasteNamn = r.fastetyp === "klister" ? "klister" : "hårdvalla";
 
@@ -175,7 +187,8 @@
       }
     });
 
-    ritaRecept(M.rekommenderaRecept(f, allaVallor(), tillgangligt, kallor, 4));
+    ritaRecept(M.rekommenderaRecept(f, medDeladeVallor(), tillgangligt, kallor, 4));
+    ritaGemensamma(f);
 
     $("resTips").innerHTML = r.tips.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
   }
@@ -264,13 +277,19 @@
   }
   function ritaTester() {
     var ul = $("testLista"); ul.innerHTML = "";
+    var odelade = state.tester.filter(function (t) { return !arDelad(t); });
+    $("delaAlla").hidden = odelade.length < 2;
+    $("delaAlla").textContent = "Dela alla odelade (" + odelade.length + ")";
     if (!state.tester.length) { ul.appendChild(el("li", { "class": "tom" }, "Inga tester ännu.")); return; }
     state.tester.slice().reverse().forEach(function (t) {
       var namn = [t.valla].concat(t.lager || []).map(function (id) { var v = hittaValla(id); return v ? v.marke + " " + v.namn : id; }).join(" + ");
       var li = el("li", {}, "<span>" + esc(t.datum) + "</span><strong>" + esc(namn) + "</strong><span>" +
         esc(M.fmtT(t.temp)) + ", " + esc((M.SNOTYPER[t.sno] || "").toLowerCase()) + "</span><span>" + "★".repeat(t.betyg) + "☆".repeat(5 - t.betyg) +
-        "</span>" + (t.kommentar ? '<span class="marke">' + esc(t.kommentar) + "</span>" : "") + '<button type="button" class="sekundar">Ta bort</button>');
-      li.querySelector("button").onclick = function () { state.tester = state.tester.filter(function (x) { return x !== t; }); spara(); ritaTester(); rakna(); };
+        "</span>" + (t.kommentar ? '<span class="marke">' + esc(t.kommentar) + "</span>" : "") +
+        '<span class="knappar">' + (arDelad(t) ? '<span class="delad">Delad ✓</span>' : '<button type="button" class="dela">Dela</button>') +
+        '<button type="button" class="sekundar tabort">Ta bort</button></span>');
+      li.querySelector(".tabort").onclick = function () { state.tester = state.tester.filter(function (x) { return x !== t; }); spara(); ritaTester(); rakna(); };
+      var d = li.querySelector(".dela"); if (d) d.onclick = function () { dela([t]); };
       ul.appendChild(li);
     });
   }
@@ -280,9 +299,83 @@
     e.preventDefault();
     var f = e.target;
     var lager = [f.lager2.value, f.lager3.value].filter(function (x) { return x && x !== f.valla.value; });
-    state.tester.push({ datum: f.datum.value, temp: parseFloat(f.temp.value), sno: f.sno.value, valla: f.valla.value, lager: lager, betyg: parseInt(f.betyg.value, 10), kommentar: f.kommentar.value.trim() });
+    state.tester.push({ id: nyttId(), ort: valdPlats && valdPlats.namn !== "din position" ? valdPlats.namn : "",
+      fukt: parseFloat($("fukt").value) || null, datum: f.datum.value, temp: parseFloat(f.temp.value), sno: f.sno.value, valla: f.valla.value, lager: lager, betyg: parseInt(f.betyg.value, 10), kommentar: f.kommentar.value.trim() });
     spara(); f.kommentar.value = ""; f.lager2.value = ""; f.lager3.value = ""; ritaTester(); rakna();
   };
+  // ---------- Dela till den gemensamma filen (via GitHub-ärende) ----------
+  var REPO = (function () {
+    var m = location.hostname.match(/^([\w-]+)\.github\.io$/);
+    var r = location.pathname.split("/")[1];
+    return m && r ? m[1] + "/" + r : "jensnyby1975/valning";
+  })();
+  function arDelad(t) {
+    return !!state.delade[t.id] || gemensamma.tester.some(function (g) { return g.id === t.id; });
+  }
+  $("signatur").value = state.signatur || "";
+  $("signatur").oninput = function () { state.signatur = $("signatur").value.trim().slice(0, 40); spara(); };
+
+  function dela(tester) {
+    tester = tester.slice(0, 15); // håll länken kort nog för webbläsare
+    var egnaIds = {};
+    tester.forEach(function (t) { [t.valla].concat(t.lager || []).forEach(function (id) { if (/^egen-/.test(id)) egnaIds[id] = 1; }); });
+    var data = {
+      tester: tester.map(function (t) {
+        return { id: t.id, datum: t.datum, temp: t.temp, fukt: t.fukt == null ? undefined : t.fukt, sno: t.sno, valla: t.valla,
+          lager: t.lager || [], betyg: t.betyg, kommentar: t.kommentar || "", ort: t.ort || "", signatur: state.signatur || "" };
+      }),
+      egna: state.egna.filter(function (v) { return egnaIds[v.id]; })
+    };
+    var rader = tester.map(function (t) {
+      var namn = [t.valla].concat(t.lager || []).map(function (id) { var v = hittaValla(id); return v ? v.marke + " " + v.namn : id; }).join(" + ");
+      return "| " + t.datum + " | " + M.fmtT(t.temp) + " | " + (M.SNOTYPER[t.sno] || t.sno) + " | " + namn.replace(/\|/g, "/") + " | " + t.betyg + "/5 |";
+    });
+    var body = "<!-- vallatest -->\nVallatest delat från Vallaguiden. Skicka ärendet så sparas testerna automatiskt i den gemensamma filen.\n\n" +
+      "| Datum | Temp | Snö | Valla | Betyg |\n|---|---|---|---|---|\n" + rader.join("\n") +
+      "\n\n```json\n" + JSON.stringify(data) + "\n```\n";
+    var titel = "Vallatest: " + (tester.length === 1 ? rader[0].split("|")[4].trim() : tester.length + " tester");
+    var url = "https://github.com/" + REPO + "/issues/new?title=" + encodeURIComponent(titel) + "&body=" + encodeURIComponent(body);
+    var a = el("a", { href: url, target: "_blank", rel: "noopener" });
+    document.body.appendChild(a); a.click(); a.remove();
+    tester.forEach(function (t) { state.delade[t.id] = 1; });
+    spara(); ritaTester();
+    $("delaStatus").innerHTML = 'GitHub öppnades i en ny flik – tryck <strong>Submit new issue</strong> där. Öppnades inget? <a href="' + esc(url) + '" target="_blank" rel="noopener">Öppna här</a>.';
+  }
+  $("delaAlla").onclick = function () { dela(state.tester.filter(function (t) { return !arDelad(t); })); };
+
+  function ritaGemensamma(f) {
+    var ul = $("gemensamLista"); if (!ul) return;
+    var personer = {}; gemensamma.tester.forEach(function (t) { personer[t.github || t.signatur] = 1; });
+    $("gemensamInfo").textContent = gemensamma.tester.length
+      ? gemensamma.tester.length + " tester från " + Object.keys(personer).length + " person(er). Närmast dagens förhållanden:"
+      : "Inga delade tester än. Bli först – logga ett test och tryck Dela.";
+    var lista = gemensamma.tester.slice().sort(function (a, b) {
+      var da = Math.abs(a.temp - f.temp) + (a.sno === f.sno ? 0 : 3), db = Math.abs(b.temp - f.temp) + (b.sno === f.sno ? 0 : 3);
+      return da - db || (b.datum > a.datum ? 1 : -1);
+    }).slice(0, 8);
+    ul.innerHTML = "";
+    lista.forEach(function (t) {
+      var namn = [t.valla].concat(t.lager || []).map(function (id) { var v = hittaValla(id); return v ? v.marke + " " + v.namn : id; }).join(" + ");
+      ul.appendChild(el("li", {}, "<span>" + esc(t.datum) + "</span><strong>" + esc(namn) + "</strong><span>" + esc(M.fmtT(t.temp)) + ", " +
+        esc((M.SNOTYPER[t.sno] || "").toLowerCase()) + (t.ort ? ", " + esc(t.ort) : "") + "</span><span>" + "★".repeat(t.betyg) + "☆".repeat(5 - t.betyg) + "</span>" +
+        (t.kommentar ? '<span class="marke">' + esc(t.kommentar) + "</span>" : "") + '<span class="marke">– ' + esc(t.signatur || t.github || "") + "</span>"));
+    });
+  }
+
+  function laddaGemensamma(d) {
+    if (!d || !Array.isArray(d.tester)) return;
+    gemensamma.tester = d.tester;
+    gemensamma.uppdaterad = d.uppdaterad;
+    var e = [];
+    d.tester.forEach(function (t) { (t.egnaVallor || []).forEach(function (v) { e.push(v); }); });
+    gemensamma.egna = e;
+    ritaTester(); rakna();
+  }
+  if (window.GEMENSAMMA_TESTER) laddaGemensamma(window.GEMENSAMMA_TESTER);
+  else if (location.protocol !== "file:") {
+    fetch("data/tester.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(laddaGemensamma).catch(function () {});
+  }
+
   $("exportera").onclick = function () {
     var json = JSON.stringify({ tester: state.tester, egna: state.egna }, null, 1);
     var ta = $("exportText"); ta.hidden = false; ta.value = json; ta.select();
@@ -298,7 +391,8 @@
       var d = JSON.parse(txt);
       var finns = {}; state.egna.forEach(function (v) { finns[v.id] = 1; });
       (d.egna || []).forEach(function (v) { if (!finns[v.id]) state.egna.push(v); });
-      state.tester = state.tester.concat(d.tester || []);
+      var harId = {}; state.tester.forEach(function (t) { harId[t.id] = 1; });
+      (d.tester || []).forEach(function (t) { if (!t.id) t.id = nyttId(); if (!harId[t.id]) state.tester.push(t); });
       spara(); ritaMarken(); ritaVallalista(); fyllTestValla(); ritaTester(); rakna();
     }).catch(function () { $("exportText").hidden = false; $("exportText").value = "Kunde inte läsa filen – är det en JSON-export från Vallaguiden?"; });
   };

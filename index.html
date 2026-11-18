@@ -120,6 +120,16 @@
       <button type="submit">Spara test</button>
     </form>
     <ul id="testLista" class="testlista"></ul>
+    <div class="rad">
+      <label class="vaxa">Ditt namn eller smeknamn (visas med delade tester)
+        <input id="signatur" type="text" maxlength="40" placeholder="t.ex. Jens, IFK Mora" autocomplete="nickname">
+      </label>
+      <button id="delaAlla" type="button" hidden>Dela alla odelade</button>
+    </div>
+    <p id="delaStatus" class="hjalp">Dela dina tester så hamnar de i den gemensamma filen och hjälper alla. Det öppnar ett färdigifyllt ärende på GitHub (gratis konto krävs).</p>
+    <h3>Gemensamma tester</h3>
+    <p id="gemensamInfo" class="hjalp"></p>
+    <ul id="gemensamLista" class="testlista"></ul>
     <textarea id="exportText" class="exporttext" rows="5" readonly hidden aria-label="Exporterade tester"></textarea>
     <div class="rad">
       <button id="exportera" type="button" class="sekundar">Exportera tester (JSON)</button>
